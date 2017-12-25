@@ -3,6 +3,7 @@ package engine
 import (
     "sync"
 
+    "github.com/gorilla/websocket"
     "github.com/sirupsen/logrus"
 )
 
@@ -13,6 +14,7 @@ type (
         Components  *sync.Map
         Subscribers *sync.Map
         Events      *sync.Map
+        Server      *Server
         Log         *logrus.Logger
     }
 )
@@ -34,6 +36,20 @@ func NewLog() *logrus.Logger {
     Log.Level = logrus.DebugLevel
 
     return Log
+}
+
+// Connect adds a new client with the given connection and
+// identifier
+func (GM *GameManager) Connect(ws websocket.Conn, id string) {
+    // Create the client
+    c := &Client{
+        Id:   id,
+        Conn: ws,
+        Send: make(chan Event),
+    }
+
+    // Register it on the server
+    GM.Server.Register <- c
 }
 
 // Event registers a new event definition, all events
