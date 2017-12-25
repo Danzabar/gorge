@@ -1,6 +1,7 @@
 package engine
 
 import (
+    "errors"
     "sync"
 
     "github.com/gorilla/websocket"
@@ -22,32 +23,54 @@ type (
         Clients    *sync.Map
         Channels   *sync.Map
         Register   chan *Client
-        Disconnect chan *Client
+        Unregister chan *Client
+        Shutdown   chan bool
     }
 )
 
 // NewServer creates a new instance of the server struct
-func NewServer() *Server {
+func NewServer(GM *GameManager) *Server {
     return &Server{
+        GM:         GM,
         Clients:    new(sync.Map),
         Channels:   new(sync.Map),
         Register:   make(chan *Client),
-        Disconnect: make(chan *Client),
+        Unregister: make(chan *Client),
     }
+}
+
+// Find attempts to get a client by its identifier
+func (s *Server) Find(id string) (*Client, error) {
+    cl, ok := s.Clients.Load(id)
+
+    if !ok {
+        return &Client{}, errors.New("client doesn't exist")
+    }
+
+    return cl.(*Client), nil
 }
 
 // Connect adds a new client to the server
 func (s *Server) Connect(client *Client) {
     s.Clients.Store(client.Id, client)
 
-    go client.Reader()
-    go client.Writer()
+    go client.Reader(s)
+    go client.Writer(s)
 }
 
 // Disconnect removes a client from the server
 func (s *Server) Disconnect(client *Client) {
     s.Clients.Delete(client.Id)
     close(client.Send)
+}
+
+// Broadcast sends a message to all connected clients
+func (s *Server) Broadcast(e Event) {
+    s.Clients.Range(func(k, v interface{}) bool {
+        client := v.(*Client)
+        client.Send <- e
+        return true
+    })
 }
 
 // Reader reads messages from the client and processess
@@ -61,7 +84,7 @@ readloop:
 
             // Catch for client disconnects
             if _, k := err.(*websocket.CloseError); k {
-                s.Disconnect <- c
+                s.Unregister <- c
                 break readloop
             }
         }
@@ -101,8 +124,10 @@ servloop:
         select {
         case r := <-s.Register:
             s.Connect(r)
-        case u := <-s.Disconnect:
+        case u := <-s.Unregister:
             s.Disconnect(u)
+        case <-s.Shutdown:
+            break servloop
         }
     }
 }

@@ -12,13 +12,13 @@ var upgrader = websocket.Upgrader{
     WriteBufferSize: 1024,
 }
 
-func ConnectToServer(GM *engine.GameManager, id string, w http.ResponseWriter, r *http.Request) {
+func ConnectToServer(GM *engine.GameManager, id string, w http.ResponseWriter, r *http.Request) error {
     conn, err := upgrader.Upgrade(w, r, w.Header())
 
     if err != nil {
-        http.Error(w, "An error has occured", http.StatusBadRequest)
-        return
+        return err
     }
 
     GM.Connect(conn, id)
+    return nil
 }
