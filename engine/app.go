@@ -42,6 +42,20 @@ func NewLog() *logrus.Logger {
     return Log
 }
 
+// Run for now isn't much, but it will be incharge of
+// initialising components and running the game engine
+func (GM *GameManager) Run() {
+    var wg sync.WaitGroup
+
+    wg.Add(1)
+
+    // Register Components
+    go GM.RegisterComponents()
+
+    wg.Wait()
+    GM.Log.Debug("Game has started...")
+}
+
 // Connect adds a new client with the given connection and
 // identifier
 func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
@@ -76,6 +90,28 @@ func (GM *GameManager) RegisterHandler(n string, h EventHandler) {
 func (GM *GameManager) Event(e EventDefinition) {
     // Register the event
     GM.Events.Store(e.Name, e)
+}
+
+// AddComponents adds a map of components to the store
+func (GM *GameManager) AddComponents(components map[string]ComponentInterface) {
+    for key, value := range components {
+        GM.Log.Debugf("Loading component %s", key)
+        value.SetGM(GM)
+
+        // Add to the store
+        GM.Components.Store(key, value)
+    }
+}
+
+// RegisterComponents calls the register method on
+// components in the store
+func (GM *GameManager) RegisterComponents() {
+    GM.Components.Range(func(k, v interface{}) bool {
+        component := v.(ComponentInterface)
+        component.Register()
+        GM.Log.Debugf("Registered component %s", k.(string))
+        return true
+    })
 }
 
 // FireEvent fires the event using the rules registered in the
@@ -129,7 +165,6 @@ func (GM *GameManager) sendWebsocketEvent(e Event, b bool) {
         return
     }
 
-    // However if its not a broadcast, we need to have a client
     client, err := GM.Server.Find(e.ClientId)
 
     if err != nil {
@@ -137,6 +172,5 @@ func (GM *GameManager) sendWebsocketEvent(e Event, b bool) {
         return
     }
 
-    // Otherwise we can send
     client.Send <- e
 }

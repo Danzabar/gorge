@@ -2,6 +2,7 @@ package main
 
 import (
     "net/http"
+    "text/template"
 
     "github.com/Danzabar/gorge/engine"
     "github.com/Danzabar/gorge/utils"
@@ -9,13 +10,38 @@ import (
 )
 
 var (
+    // Instance of the Game Manager
+    // this is needed to connect
     GM *engine.GameManager
+
+    // A test script to see the events streaming from the
+    // server
+    T = `<script>
+            const ws = new WebSocket("ws://localhost:8080/server");
+
+            ws.onopen = function() {
+                console.log('connected');
+            }
+
+            ws.onmessage = function(e) {
+                console.log(e);
+            }
+
+            ws.onclose = function() {
+                console.log('disconnected');
+            }
+        </script>`
 )
 
 func main() {
     GM = engine.NewGame()
 
+    utils.LoadDefaultComponents(GM)
+
+    go GM.Run()
+
     router := mux.NewRouter()
+    router.HandleFunc("/", TestHandler)
     router.HandleFunc("/server", WsHandler)
 
     http.Handle("/", router)
@@ -23,7 +49,8 @@ func main() {
 }
 
 func TestHandler(w http.ResponseWriter, r *http.Request) {
-
+    t, _ := template.New("out").Parse(T)
+    t.Execute(w, nil)
 }
 
 // A websocket handler

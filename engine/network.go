@@ -30,13 +30,16 @@ type (
 
 // NewServer creates a new instance of the server struct
 func NewServer(GM *GameManager) *Server {
-    return &Server{
+    serv := &Server{
         GM:         GM,
         Clients:    new(sync.Map),
         Channels:   new(sync.Map),
         Register:   make(chan *Client),
         Unregister: make(chan *Client),
     }
+
+    go serv.Listen()
+    return serv
 }
 
 // Find attempts to get a client by its identifier
@@ -56,12 +59,16 @@ func (s *Server) Connect(client *Client) {
 
     go client.Reader(s)
     go client.Writer(s)
+
+    s.GM.Log.Debug("New client connected")
 }
 
 // Disconnect removes a client from the server
 func (s *Server) Disconnect(client *Client) {
     s.Clients.Delete(client.Id)
     close(client.Send)
+
+    s.GM.Log.Debug("Client disconnected")
 }
 
 // Broadcast sends a message to all connected clients

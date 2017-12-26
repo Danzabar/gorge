@@ -21,7 +21,10 @@ func (t *Ticker) Register() {
 }
 
 func (t *Ticker) Tick() {
-    <-time.After(1 * time.Second)
+    for {
+        <-time.After(1 * time.Second)
 
-    c.Fire("tick", t)
+        t.Count++
+        t.Fire("tick", t)
+    }
 }
