@@ -11,9 +11,9 @@ type (
 
     // Client represents a connected client/user
     Client struct {
-        Id   string `json:"id"`
-        Conn *websocket.Conn
-        Send chan Event
+        Id   string          `json:"id"`
+        Conn *websocket.Conn `json:"-"`
+        Send chan Event      `json:"-"`
     }
 
     // Server represents the collection of connected
@@ -38,8 +38,64 @@ func NewServer(GM *GameManager) *Server {
         Unregister: make(chan *Client),
     }
 
+    // Register events
+    GM.Event(EventDefinition{"connected", "fired when a new client connects", false, []string{INTERNAL_CHAN}})
+    GM.Event(EventDefinition{"disconnect", "fired when a client disconnects", false, []string{INTERNAL_CHAN}})
+
+    // Add the default channels
+    serv.NewChannels(map[string]ChannelInterface{
+        INTERNAL_CHAN: &InternalChannel{},
+        DIRECT_CHAN:   &Channel{},
+        SERVER_CHAN:   &ServerChannel{},
+    })
+
     go serv.Listen()
     return serv
+}
+
+// SendToChannels uses the channels on an event definition to send
+// the events to right clients
+func (s *Server) SendToChannels(e Event, d EventDefinition) {
+    for _, v := range d.Channels {
+        ch, err := s.FindChannel(v)
+
+        if err != nil {
+            s.GM.Log.Errorf("Unable to find channel %s - Cannot send event %+v", v, e)
+            continue
+        }
+
+        ch.Send(e, d, s)
+    }
+}
+
+// NewChannels creates and adds channels to the store
+func (s *Server) NewChannels(c map[string]ChannelInterface) {
+    for k, v := range c {
+        v.Open()
+        s.Channels.Store(k, v)
+    }
+}
+
+// ConnectTo connects the given client to a channel by name
+func (s *Server) ConnectTo(n string, c *Client) {
+    ch, err := s.FindChannel(n)
+
+    if err != nil {
+        s.GM.Log.Errorf("Unable to connect to channel %s - it has not yet been registered", n)
+        return
+    }
+
+    ch.Connect(c)
+}
+
+func (s *Server) FindChannel(n string) (ChannelInterface, error) {
+    ch, ok := s.Channels.Load(n)
+
+    if !ok {
+        return &Channel{}, errors.New("channel " + n + " does not exist")
+    }
+
+    return ch.(ChannelInterface), nil
 }
 
 // Find attempts to get a client by its identifier
@@ -60,6 +116,7 @@ func (s *Server) Connect(client *Client) {
     go client.Reader(s)
     go client.Writer(s)
 
+    s.GM.FireEvent(NewEvent("connected", client))
     s.GM.Log.Debug("New client connected")
 }
 
@@ -68,6 +125,7 @@ func (s *Server) Disconnect(client *Client) {
     s.Clients.Delete(client.Id)
     close(client.Send)
 
+    s.GM.FireEvent(NewEvent("disconnected", client))
     s.GM.Log.Debug("Client disconnected")
 }
 

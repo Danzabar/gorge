@@ -14,7 +14,7 @@ type (
 )
 
 func (t *Ticker) Register() {
-    t.Event("tick", "fired for every tick of the game", false, false, true)
+    t.Event("tick", "fired for every tick of the game", true, []string{engine.INTERNAL_CHAN, engine.SERVER_CHAN})
 
     // Start the tick loop
     go t.Tick()

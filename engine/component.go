@@ -25,8 +25,8 @@ func (c *Component) SetGM(GM *GameManager) {
 }
 
 // Event is an easier to use proxy method to register an event
-func (c *Component) Event(n string, d string, bc bool, ws bool, in bool) {
-    c.GM.Event(EventDefinition{n, d, bc, ws, in})
+func (c *Component) Event(n string, d string, b bool, ch []string) {
+    c.GM.Event(EventDefinition{n, d, b, ch})
 }
 
 // Register proxy method to register a new event handler

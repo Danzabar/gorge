@@ -118,59 +118,13 @@ func (GM *GameManager) RegisterComponents() {
 // associative definition
 func (GM *GameManager) FireEvent(e Event) {
     def, ok := GM.Events.Load(e.Name)
-    definition := def.(EventDefinition)
 
     if !ok {
         GM.Log.Errorf("Unable to locate a triggered event %s", e.Name)
         return
     }
 
-    // Check the details of the definition
-    if definition.Internal {
-        go GM.sendInternalEvent(e)
-    }
+    definition := def.(EventDefinition)
 
-    if definition.Websocket {
-        go GM.sendWebsocketEvent(e, definition.Broadcast)
-    }
-}
-
-// Sends an internal event, uses the subscribers list
-func (GM *GameManager) sendInternalEvent(e Event) {
-    subs, ok := GM.Subscribers.Load(e.Name)
-
-    if !ok {
-        GM.Log.Warningf("Event called with no active subscribers: %s", e.Name)
-        return
-    }
-
-    subscribers := subs.([]EventHandler)
-
-    // Fire all the things
-    for _, sub := range subscribers {
-        sub(e)
-    }
-}
-
-// Either direct or broadcast to a client/s
-func (GM *GameManager) sendWebsocketEvent(e Event, b bool) {
-    // If its a broadcast, we don't need to find a client
-    if b {
-        GM.Server.Broadcast(e)
-        return
-    }
-
-    if !b && e.ClientId == "" {
-        GM.Log.Errorf("Direct event sent with no client id: %+v", e)
-        return
-    }
-
-    client, err := GM.Server.Find(e.ClientId)
-
-    if err != nil {
-        GM.Log.Errorf("Direct event sent with unknown client: %s", e.ClientId)
-        return
-    }
-
-    client.Send <- e
+    go GM.Server.SendToChannels(e, definition)
 }

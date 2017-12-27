@@ -7,6 +7,7 @@ import (
     "github.com/Danzabar/gorge/engine"
     "github.com/Danzabar/gorge/utils"
     "github.com/gorilla/mux"
+    "github.com/teris-io/shortid"
 )
 
 var (
@@ -55,7 +56,8 @@ func TestHandler(w http.ResponseWriter, r *http.Request) {
 
 // A websocket handler
 func WsHandler(w http.ResponseWriter, r *http.Request) {
-    if err := utils.ConnectToServer(GM, "test", w, r); err != nil {
+    id, _ := shortid.Generate()
+    if err := utils.ConnectToServer(GM, id, w, r); err != nil {
         panic(err)
     }
 }

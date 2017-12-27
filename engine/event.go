@@ -20,11 +20,10 @@ type (
     // EventDefinition stores the definition of an event
     // used for documentation
     EventDefinition struct {
-        Name        string `json:"name"`
-        Description string `json:"description"`
-        Broadcast   bool   `json:"broadcast"`
-        Websocket   bool   `json:"websocket"`
-        Internal    bool   `json:"internal"`
+        Name        string   `json:"name"`
+        Description string   `json:"description"`
+        Broadcast   bool     `json:"broadcast"`
+        Channels    []string `json:"channels"`
     }
 
     // EventHandlers are used to process events
