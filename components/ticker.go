@@ -13,11 +13,14 @@ type (
     }
 )
 
+// Register registers the events used by this component
 func (t *Ticker) Register() {
-    t.Event("tick", "fired for every tick of the game", true, []string{engine.INTERNAL_CHAN, engine.SERVER_CHAN})
+    t.Event("tick", "fired every second as a marker for other components", []string{engine.INTERNAL_CHAN, engine.SERVER_CHAN})
+}
 
-    // Start the tick loop
-    go t.Tick()
+// Run is a method that is called when the game has started
+func (t *Ticker) Run() {
+    t.Tick()
 }
 
 func (t *Ticker) Tick() {

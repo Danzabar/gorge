@@ -9,12 +9,13 @@ import (
 type (
     // Event contains a platform event details
     Event struct {
-        ID        string      `json:"id"`
-        Name      string      `json:"name"`
-        Data      interface{} `json:"data"`
-        Inbound   bool        `json:"inbound"`
-        ClientId  string      `json:"clientId"`
-        CreatedAt time.Time   `json:"createdAt"`
+        ID         string          `json:"id"`
+        Name       string          `json:"name"`
+        Data       interface{}     `json:"data"`
+        Broadcast  bool            `json:"broadcast"`
+        Definition EventDefinition `json:"definition"`
+        ClientId   string          `json:"clientId"`
+        CreatedAt  time.Time       `json:"createdAt"`
     }
 
     // EventDefinition stores the definition of an event
@@ -22,7 +23,6 @@ type (
     EventDefinition struct {
         Name        string   `json:"name"`
         Description string   `json:"description"`
-        Broadcast   bool     `json:"broadcast"`
         Channels    []string `json:"channels"`
     }
 
@@ -37,7 +37,6 @@ func NewEvent(n string, d interface{}) Event {
         ID:        id,
         Name:      n,
         Data:      d,
-        Inbound:   false,
         CreatedAt: time.Now(),
     }
 }

@@ -39,8 +39,8 @@ func NewServer(GM *GameManager) *Server {
     }
 
     // Register events
-    GM.Event(EventDefinition{"connected", "fired when a new client connects", false, []string{INTERNAL_CHAN}})
-    GM.Event(EventDefinition{"disconnect", "fired when a client disconnects", false, []string{INTERNAL_CHAN}})
+    GM.Event(EventDefinition{"connected", "fired when a new client connects", []string{INTERNAL_CHAN}})
+    GM.Event(EventDefinition{"disconnect", "fired when a client disconnects", []string{INTERNAL_CHAN}})
 
     // Add the default channels
     serv.NewChannels(map[string]ChannelInterface{
@@ -64,13 +64,14 @@ func (s *Server) SendToChannels(e Event, d EventDefinition) {
             continue
         }
 
-        ch.Send(e, d, s)
+        ch.Send(e, d)
     }
 }
 
 // NewChannels creates and adds channels to the store
 func (s *Server) NewChannels(c map[string]ChannelInterface) {
     for k, v := range c {
+        v.SetGM(s.GM)
         v.Open()
         s.Channels.Store(k, v)
     }
@@ -88,6 +89,7 @@ func (s *Server) ConnectTo(n string, c *Client) {
     ch.Connect(c)
 }
 
+// FindChannel attempts to fetch a channel from the store
 func (s *Server) FindChannel(n string) (ChannelInterface, error) {
     ch, ok := s.Channels.Load(n)
 
@@ -155,7 +157,6 @@ readloop:
         }
 
         // Set the info we already know about the event
-        e.Inbound = true
         e.ClientId = c.Id
 
         // Finally fire the event

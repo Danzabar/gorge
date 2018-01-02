@@ -8,6 +8,7 @@ import (
 // LoadDefaultComponents loads the standard components
 func LoadDefaultComponents(GM *engine.GameManager) {
     GM.AddComponents(map[string]engine.ComponentInterface{
+        "entity": &components.EntityComponent{},
         "ticker": &components.Ticker{},
     })
 }

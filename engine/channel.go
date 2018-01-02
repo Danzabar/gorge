@@ -26,7 +26,7 @@ type (
 
         // Send is whats called when a new event is triggered
         // using the channel
-        Send(Event, EventDefinition, *Server)
+        Send(Event, EventDefinition)
 
         // Close is called when the channel is closed
         Close()
@@ -36,11 +36,15 @@ type (
 
         // Disconnect is called when a client exits the channel
         Disconnect(*Client)
+
+        // SetGM sets the game manager instance
+        SetGM(*GameManager)
     }
 
     // Channel is a base channel struct, helps creating a standard
     // channel
     Channel struct {
+        GM      *GameManager
         Clients *sync.Map
     }
 
@@ -55,15 +59,19 @@ type (
     }
 )
 
+func (ch *Channel) SetGM(GM *GameManager) {
+    ch.GM = GM
+}
+
 // Open - On the base channel object, this isn't really needed
 func (ch *Channel) Open() {
     ch.Clients = new(sync.Map)
 }
 
 // Send sends an event to clients on the channel
-func (ch *Channel) Send(e Event, d EventDefinition, s *Server) {
+func (ch *Channel) Send(e Event, d EventDefinition) {
     // If the message is a broadcast send it to everyone
-    if d.Broadcast {
+    if e.Broadcast {
         ch.Clients.Range(func(k, v interface{}) bool {
             client := v.(*Client)
 
@@ -72,15 +80,15 @@ func (ch *Channel) Send(e Event, d EventDefinition, s *Server) {
         })
     }
 
-    if !d.Broadcast && e.ClientId == "" {
-        s.GM.Log.Errorf("Direct event sent with no client id: %+v", e)
+    if !e.Broadcast && e.ClientId == "" {
+        ch.GM.Log.Errorf("Direct event sent with no client id: %+v", e)
         return
     }
 
-    client, err := s.Find(e.ClientId)
+    client, err := ch.GM.Server.Find(e.ClientId)
 
     if err != nil {
-        s.GM.Log.Errorf("Direct event sent with unknown client: %s", e.ClientId)
+        ch.GM.Log.Errorf("Direct event sent with unknown client: %s", e.ClientId)
         return
     }
 
@@ -101,11 +109,11 @@ func (ch *Channel) Disconnect(c *Client) {
 }
 
 // Send method for the internal channel
-func (ch *InternalChannel) Send(e Event, d EventDefinition, s *Server) {
-    subs, ok := s.GM.Subscribers.Load(e.Name)
+func (ch *InternalChannel) Send(e Event, d EventDefinition) {
+    subs, ok := ch.GM.Subscribers.Load(e.Name)
 
     if !ok {
-        s.GM.Log.Warningf("Internal event called with no active subscribers: %s", e.Name)
+        ch.GM.Log.Warningf("Internal event called with no active subscribers: %s", e.Name)
         return
     }
 
@@ -124,8 +132,8 @@ func (ch *InternalChannel) Connect(c *Client) {}
 func (ch *InternalChannel) Disconnect(c *Client) {}
 
 // Send on the server channel can use the servers broadcast method
-func (ch *ServerChannel) Send(e Event, d EventDefinition, s *Server) {
-    s.Broadcast(e)
+func (ch *ServerChannel) Send(e Event, d EventDefinition) {
+    ch.GM.Server.Broadcast(e)
 }
 
 // Connect on server is useless

@@ -35,11 +35,11 @@ var (
 )
 
 func main() {
-    GM = engine.NewGame()
+    GM = engine.NewGame("sqlite3", "/tmp/gorge.db")
 
     utils.LoadDefaultComponents(GM)
 
-    go GM.Run()
+    GM.Run()
 
     router := mux.NewRouter()
     router.HandleFunc("/", TestHandler)
