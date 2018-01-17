@@ -36,6 +36,9 @@ func (c *Component) SetGM(GM *GameManager) {
     c.GM = GM
 }
 
+// Register default register method for components that do not require it
+func (c *Component) Register() {}
+
 // Run default run method for components that do not require it
 func (c *Component) Run() {}
 
