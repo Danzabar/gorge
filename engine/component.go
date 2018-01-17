@@ -2,6 +2,7 @@ package engine
 
 import (
     "github.com/jinzhu/gorm"
+    "github.com/sirupsen/logrus"
 )
 
 type (
@@ -40,6 +41,11 @@ func (c *Component) Run() {}
 
 // Setup default setup method for components that do not require it
 func (c *Component) Setup() {}
+
+// Log returns the logrus instance from the application
+func (c *Component) Log() *logrus.Logger {
+    return c.GM.Log
+}
 
 // DB fetches the database instance from the application
 func (c *Component) DB() *gorm.DB {

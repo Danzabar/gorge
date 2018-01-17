@@ -22,9 +22,9 @@ type (
 
 func (e *EntityComponent) Register() {
     // Register events
-    e.Event("entity:created", "fired when a new entity is created", []string{engine.INTERNAL_CHAN, engine.SERVER_CHAN})
-    e.Event("entity:updated", "fired when an entity is updated", []string{engine.INTERNAL_CHAN, engine.SERVER_CHAN})
-    e.Event("entity:deleted", "fired when an entity is deleted", []string{engine.INTERNAL_CHAN, engine.SERVER_CHAN})
+    e.Event("entity:created", "fired when a new entity is created", []string{engine.INTERNAL_CHAN, engine.DIRECT_CHAN})
+    e.Event("entity:updated", "fired when an entity is updated", []string{engine.INTERNAL_CHAN, engine.DIRECT_CHAN})
+    e.Event("entity:deleted", "fired when an entity is deleted", []string{engine.INTERNAL_CHAN, engine.DIRECT_CHAN})
 
     // Register the gorm callbacks
     e.callbacks()

@@ -11,9 +11,16 @@ type (
 
     // Client represents a connected client/user
     Client struct {
-        Id   string          `json:"id"`
-        Conn *websocket.Conn `json:"-"`
-        Send chan Event      `json:"-"`
+        Id     string              `json:"id"`
+        Conn   ConnectionInterface `json:"-"`
+        Send   chan Event          `json:"-"`
+        Params *sync.Map           `json:"params"`
+    }
+
+    // ConnectionInterface defines what we expect from a connection
+    ConnectionInterface interface {
+        Reader(c *Client, s *Server)
+        Writer(c *Client, s *Server)
     }
 
     // Server represents the collection of connected
@@ -25,6 +32,13 @@ type (
         Register   chan *Client
         Unregister chan *Client
         Shutdown   chan bool
+    }
+
+    // WebsocketConnection is the default connection used
+    // provides a websocket reader and writer for the client to
+    // connect to
+    WebsocketConnection struct {
+        Conn *websocket.Conn
     }
 )
 
@@ -39,8 +53,8 @@ func NewServer(GM *GameManager) *Server {
     }
 
     // Register events
-    GM.Event(EventDefinition{"connected", "fired when a new client connects", []string{INTERNAL_CHAN}})
-    GM.Event(EventDefinition{"disconnect", "fired when a client disconnects", []string{INTERNAL_CHAN}})
+    GM.Event(EventDefinition{"connected", "fired when a new client connects", []string{INTERNAL_CHAN, DIRECT_CHAN}})
+    GM.Event(EventDefinition{"disconnect", "fired when a client disconnects", []string{INTERNAL_CHAN, DIRECT_CHAN}})
 
     // Add the default channels
     serv.NewChannels(map[string]ChannelInterface{
@@ -49,7 +63,6 @@ func NewServer(GM *GameManager) *Server {
         SERVER_CHAN:   &ServerChannel{},
     })
 
-    go serv.Listen()
     return serv
 }
 
@@ -115,11 +128,13 @@ func (s *Server) Find(id string) (*Client, error) {
 func (s *Server) Connect(client *Client) {
     s.Clients.Store(client.Id, client)
 
-    go client.Reader(s)
-    go client.Writer(s)
+    s.GM.Log.Debugf("Connecting new client %s", client.Id)
 
-    s.GM.FireEvent(NewEvent("connected", client))
-    s.GM.Log.Debug("New client connected")
+    go client.Conn.Reader(client, s)
+    go client.Conn.Writer(client, s)
+
+    s.GM.FireEvent(NewDirectEvent("connected", client, client.Id))
+    s.GM.Log.Debugf("%s client connected", client.Id)
 }
 
 // Disconnect removes a client from the server
@@ -127,12 +142,13 @@ func (s *Server) Disconnect(client *Client) {
     s.Clients.Delete(client.Id)
     close(client.Send)
 
-    s.GM.FireEvent(NewEvent("disconnected", client))
+    s.GM.FireEvent(NewDirectEvent("disconnected", client, client.Id))
     s.GM.Log.Debug("Client disconnected")
 }
 
 // Broadcast sends a message to all connected clients
 func (s *Server) Broadcast(e Event) {
+    s.GM.Log.Debug("Broadcasting event...")
     s.Clients.Range(func(k, v interface{}) bool {
         client := v.(*Client)
         client.Send <- e
@@ -142,12 +158,12 @@ func (s *Server) Broadcast(e Event) {
 
 // Reader reads messages from the client and processess
 // them as events
-func (c *Client) Reader(s *Server) {
+func (ws *WebsocketConnection) Reader(c *Client, s *Server) {
 readloop:
     for {
         var e Event
 
-        if err := c.Conn.ReadJSON(&e); err != nil {
+        if err := ws.Conn.ReadJSON(&e); err != nil {
 
             // Catch for client disconnects
             if _, k := err.(*websocket.CloseError); k {
@@ -165,7 +181,7 @@ readloop:
 }
 
 // Writer writes messages to the given client
-func (c *Client) Writer(s *Server) {
+func (ws *WebsocketConnection) Writer(c *Client, s *Server) {
 writerloop:
     for {
         select {
@@ -176,7 +192,7 @@ writerloop:
                 break writerloop
             }
 
-            if err := c.Conn.WriteJSON(event); err != nil {
+            if err := ws.Conn.WriteJSON(event); err != nil {
                 s.GM.Log.Errorf("Unable to process event: %+v", event)
             }
         }
@@ -185,6 +201,7 @@ writerloop:
 
 // Listen starts the server loop
 func (s *Server) Listen() {
+    s.GM.Log.Debug("Starting server listen")
 servloop:
     for {
         select {

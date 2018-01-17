@@ -37,6 +37,13 @@ func NewEvent(n string, d interface{}) Event {
         ID:        id,
         Name:      n,
         Data:      d,
+        Broadcast: false,
         CreatedAt: time.Now(),
     }
+}
+
+func NewDirectEvent(n string, d interface{}, c string) Event {
+    ev := NewEvent(n, d)
+    ev.ClientId = c
+    return ev
 }

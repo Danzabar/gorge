@@ -66,6 +66,10 @@ func (GM *GameManager) Run() {
     defer GM.RunComponents()
 
     GM.Log.Debug("Game has started...")
+
+    // Start the servers listen routine, so we can connect
+    // to it
+    go GM.Server.Listen()
 }
 
 // Connect adds a new client with the given connection and
@@ -73,9 +77,10 @@ func (GM *GameManager) Run() {
 func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
     // Create the client
     c := &Client{
-        Id:   id,
-        Conn: ws,
-        Send: make(chan Event),
+        Id:     id,
+        Conn:   &WebsocketConnection{Conn: ws},
+        Send:   make(chan Event),
+        Params: new(sync.Map),
     }
 
     // Register it on the server
