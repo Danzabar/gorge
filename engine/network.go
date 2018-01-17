@@ -134,7 +134,6 @@ func (s *Server) Connect(client *Client) {
     go client.Conn.Writer(client, s)
 
     s.GM.FireEvent(NewDirectEvent("connected", client, client.Id))
-    s.GM.Log.Debugf("%s client connected", client.Id)
 }
 
 // Disconnect removes a client from the server
@@ -143,12 +142,10 @@ func (s *Server) Disconnect(client *Client) {
     close(client.Send)
 
     s.GM.FireEvent(NewDirectEvent("disconnected", client, client.Id))
-    s.GM.Log.Debug("Client disconnected")
 }
 
 // Broadcast sends a message to all connected clients
 func (s *Server) Broadcast(e Event) {
-    s.GM.Log.Debug("Broadcasting event...")
     s.Clients.Range(func(k, v interface{}) bool {
         client := v.(*Client)
         client.Send <- e
@@ -201,7 +198,6 @@ writerloop:
 
 // Listen starts the server loop
 func (s *Server) Listen() {
-    s.GM.Log.Debug("Starting server listen")
 servloop:
     for {
         select {
