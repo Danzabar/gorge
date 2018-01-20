@@ -5,6 +5,7 @@ type (
 	// information an instance might need
 	Instance struct {
 		*Component
+		Client *Client
 	}
 
 	// InstanceInterface defines the expectations of an instance
@@ -13,9 +14,9 @@ type (
 		// its connected
 		Register(*Instance)
 		// Connect is called when the instance is bound to the client
-		Connect(*Instance, *Client)
+		Connect(*Instance)
 		// Destroy is called when the instance is destroyed
-		Destroy(*Instance, *Client)
+		Destroy(*Instance)
 	}
 )
 
@@ -26,8 +27,13 @@ func NewInstance(GM *GameManager) *Instance {
 	return i
 }
 
+// SetClient sets the connected client
+func (i *Instance) SetClient(c *Client) {
+	i.Client = c
+}
+
 // Handler is an override to create a new event handler,
 // this ensures that an instance can bind to direct event messages
 func (i *Instance) Handler(n string, h EventHandler) {
-	i.Component.GM.InstanceHandler(n, h)
+	i.Client.RegisterHandler(n, h)
 }

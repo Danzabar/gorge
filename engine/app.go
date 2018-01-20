@@ -16,15 +16,14 @@ type (
 
 	// Gamemanager handles components and subscriptions
 	GameManager struct {
-		Components   *sync.Map
-		Instances    *sync.Map
-		Subscribers  *sync.Map
-		InstanceSubs *sync.Map
-		Events       *sync.Map
-		Server       *Server
-		Log          *logrus.Logger
-		DB           *gorm.DB
-		Migrations   []interface{}
+		Components  *sync.Map
+		Instances   *sync.Map
+		Subscribers *sync.Map
+		Events      *sync.Map
+		Server      *Server
+		Log         *logrus.Logger
+		DB          *gorm.DB
+		Migrations  []interface{}
 	}
 )
 
@@ -37,13 +36,12 @@ func NewGame(dbDriver, dbCreds string) *GameManager {
 	}
 
 	GM := &GameManager{
-		Components:   new(sync.Map),
-		Instances:    new(sync.Map),
-		Subscribers:  new(sync.Map),
-		InstanceSubs: new(sync.Map),
-		Events:       new(sync.Map),
-		Log:          NewLog(),
-		DB:           db,
+		Components:  new(sync.Map),
+		Instances:   new(sync.Map),
+		Subscribers: new(sync.Map),
+		Events:      new(sync.Map),
+		Log:         NewLog(),
+		DB:          db,
 	}
 
 	GM.Server = NewServer(GM)
@@ -99,21 +97,6 @@ func (GM *GameManager) RegisterHandler(n string, h EventHandler) {
 	// append the new handler
 	handlers = append(handlers, h)
 	GM.Subscribers.Store(n, handlers)
-}
-
-// InstanceHandler registers handlers for instances, these are registered differently
-// because they are fired differently
-func (GM *GameManager) InstanceHandler(n string, h EventHandler) {
-	var handlers []EventHandler
-
-	reg, ok := GM.InstanceSubs.Load(n)
-
-	if ok {
-		handlers = reg.([]EventHandler)
-	}
-
-	handlers = append(handlers, h)
-	GM.InstanceSubs.Store(n, handlers)
 }
 
 // Event registers a new event definition, all events

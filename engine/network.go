@@ -12,10 +12,11 @@ type (
 
     // Client represents a connected client/user
     Client struct {
-        Id   string              `json:"id"`
-        Conn ConnectionInterface `json:"-"`
-        Send chan Event          `json:"-"`
-        Ctx  context.Context     `json:"ctx"`
+        Id          string              `json:"id"`
+        Conn        ConnectionInterface `json:"-"`
+        Send        chan Event          `json:"-"`
+        Subscribers *sync.Map           `json:"-"`
+        Ctx         context.Context     `json:"ctx"`
     }
 
     // ConnectionInterface defines what we expect from a connection
@@ -70,11 +71,28 @@ func NewServer(GM *GameManager) *Server {
 // NewClient creates a new client from the given details
 func NewClient(c ConnectionInterface, id string) *Client {
     return &Client{
-        Id:   id,
-        Conn: c,
-        Send: make(chan Event),
-        Ctx:  context.Background(),
+        Id:          id,
+        Conn:        c,
+        Send:        make(chan Event),
+        Subscribers: new(sync.Map),
+        Ctx:         context.Background(),
     }
+}
+
+// RegisterHandler registers a handler for an Instanced component
+// all handlers for instances will bind to the `direct` channel
+// this means they will be presented with all personalised events
+func (c *Client) RegisterHandler(n string, h EventHandler) {
+    var handlers []EventHandler
+
+    reg, ok := c.Subscribers.Load(n)
+
+    if ok {
+        handlers = reg.([]EventHandler)
+    }
+
+    handlers = append(handlers, h)
+    c.Subscribers.Store(n, handlers)
 }
 
 // SendToChannels uses the channels on an event definition to send
