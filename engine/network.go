@@ -1,7 +1,6 @@
 package engine
 
 import (
-    "context"
     "errors"
     "sync"
 
@@ -15,8 +14,8 @@ type (
         Id          string              `json:"id"`
         Conn        ConnectionInterface `json:"-"`
         Send        chan Event          `json:"-"`
+        Instances   *sync.Map           `json:"-"`
         Subscribers *sync.Map           `json:"-"`
-        Ctx         context.Context     `json:"ctx"`
     }
 
     // ConnectionInterface defines what we expect from a connection
@@ -74,8 +73,8 @@ func NewClient(c ConnectionInterface, id string) *Client {
         Id:          id,
         Conn:        c,
         Send:        make(chan Event),
+        Instances:   new(sync.Map),
         Subscribers: new(sync.Map),
-        Ctx:         context.Background(),
     }
 }
 
@@ -93,6 +92,19 @@ func (c *Client) RegisterHandler(n string, h EventHandler) {
 
     handlers = append(handlers, h)
     c.Subscribers.Store(n, handlers)
+}
+
+// BindInstance adds a new instance to the client
+func (c *Client) BindInstance(n string, i InstanceInterface, inst *Instance) {
+    // We don't really care if the instance already exists
+    // we can replace it with the provided instance
+    inst.SetClient(c)
+
+    // Add to store
+    c.Instances.Store(n, i)
+
+    // Fire the connect event
+    i.Connect(inst)
 }
 
 // SendToChannels uses the channels on an event definition to send

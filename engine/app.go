@@ -84,6 +84,24 @@ func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
 	GM.Server.Register <- c
 }
 
+// BindInstance binds a registered instance to a client
+func (GM *GameManager) BindInstance(n string, c *Client) {
+	// Does the given instance exist?
+	i, ok := GM.Instances.Load(n)
+
+	if !ok {
+		GM.Log.Errorf("Unable to load instance with given name %s", n)
+		return
+	}
+
+	// Create a new instance
+	inst := NewInstance(GM)
+	in := i.(InstanceInterface)
+
+	// Bind to connection
+	c.BindInstance(n, in, inst)
+}
+
 // RegisterHandler registers a new event handler
 func (GM *GameManager) RegisterHandler(n string, h EventHandler) {
 	var handlers []EventHandler
