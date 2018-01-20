@@ -1,6 +1,7 @@
 package engine
 
 import (
+    "context"
     "errors"
     "sync"
 
@@ -11,10 +12,10 @@ type (
 
     // Client represents a connected client/user
     Client struct {
-        Id     string              `json:"id"`
-        Conn   ConnectionInterface `json:"-"`
-        Send   chan Event          `json:"-"`
-        Params *sync.Map           `json:"params"`
+        Id   string              `json:"id"`
+        Conn ConnectionInterface `json:"-"`
+        Send chan Event          `json:"-"`
+        Ctx  context.Context     `json:"ctx"`
     }
 
     // ConnectionInterface defines what we expect from a connection
@@ -64,6 +65,16 @@ func NewServer(GM *GameManager) *Server {
     })
 
     return serv
+}
+
+// NewClient creates a new client from the given details
+func NewClient(c ConnectionInterface, id string) *Client {
+    return &Client{
+        Id:   id,
+        Conn: c,
+        Send: make(chan Event),
+        Ctx:  context.Background(),
+    }
 }
 
 // SendToChannels uses the channels on an event definition to send

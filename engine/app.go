@@ -17,6 +17,7 @@ type (
 	// Gamemanager handles components and subscriptions
 	GameManager struct {
 		Components   *sync.Map
+		Instances    *sync.Map
 		Subscribers  *sync.Map
 		InstanceSubs *sync.Map
 		Events       *sync.Map
@@ -37,6 +38,7 @@ func NewGame(dbDriver, dbCreds string) *GameManager {
 
 	GM := &GameManager{
 		Components:   new(sync.Map),
+		Instances:    new(sync.Map),
 		Subscribers:  new(sync.Map),
 		InstanceSubs: new(sync.Map),
 		Events:       new(sync.Map),
@@ -78,12 +80,7 @@ func (GM *GameManager) Run() {
 // identifier
 func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
 	// Create the client
-	c := &Client{
-		Id:     id,
-		Conn:   &WebsocketConnection{Conn: ws},
-		Send:   make(chan Event),
-		Params: new(sync.Map),
-	}
+	c := NewClient(&WebsocketConnection{Conn: ws}, id)
 
 	// Register it on the server
 	GM.Server.Register <- c
@@ -135,6 +132,17 @@ func (GM *GameManager) AddComponents(components map[string]ComponentInterface) {
 
 		// Add to the store
 		GM.Components.Store(key, value)
+	}
+}
+
+// RegisterInstance registers a new instance, this just stores a point to it
+// which when connected to a client is copied
+func (GM *GameManager) RegisterInstance(instances map[string]InstanceInterface) {
+	for key, value := range instances {
+		GM.Log.Debugf("Registering instance %s", key)
+		value.Register(NewInstance(GM))
+
+		GM.Instances.Store(key, value)
 	}
 }
 
