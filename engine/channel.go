@@ -92,6 +92,18 @@ func (ch *Channel) Send(e Event, d EventDefinition) {
         return
     }
 
+    // Before sending directly to the client we should send this event
+    // to any subscribers the client may have through its instanced components
+    subs, ok := client.Subscribers.Load(e.Name)
+
+    if ok {
+        subscribers := subs.([]EventHandler)
+
+        for _, sub := range subscribers {
+            sub(e)
+        }
+    }
+
     client.Send <- e
 }
 

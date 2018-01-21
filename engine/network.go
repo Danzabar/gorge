@@ -11,10 +11,11 @@ type (
 
     // Client represents a connected client/user
     Client struct {
-        Id     string              `json:"id"`
-        Conn   ConnectionInterface `json:"-"`
-        Send   chan Event          `json:"-"`
-        Params *sync.Map           `json:"params"`
+        Id          string              `json:"id"`
+        Conn        ConnectionInterface `json:"-"`
+        Send        chan Event          `json:"-"`
+        Traits      *sync.Map           `json:"-"`
+        Subscribers *sync.Map           `json:"-"`
     }
 
     // ConnectionInterface defines what we expect from a connection
@@ -64,6 +65,46 @@ func NewServer(GM *GameManager) *Server {
     })
 
     return serv
+}
+
+// NewClient creates a new client from the given details
+func NewClient(c ConnectionInterface, id string) *Client {
+    return &Client{
+        Id:          id,
+        Conn:        c,
+        Send:        make(chan Event),
+        Traits:      new(sync.Map),
+        Subscribers: new(sync.Map),
+    }
+}
+
+// RegisterHandler registers a handler for an Instanced component
+// all handlers for instances will bind to the `direct` channel
+// this means they will be presented with all personalised events
+func (c *Client) RegisterHandler(n string, h EventHandler) {
+    var handlers []EventHandler
+
+    reg, ok := c.Subscribers.Load(n)
+
+    if ok {
+        handlers = reg.([]EventHandler)
+    }
+
+    handlers = append(handlers, h)
+    c.Subscribers.Store(n, handlers)
+}
+
+// BindInstance adds a new instance to the client
+func (c *Client) BindTrait(n string, i TraitInterface, inst *Instance) {
+    // We don't really care if the instance already exists
+    // we can replace it with the provided instance
+    inst.SetClient(c)
+
+    // Add to store
+    c.Traits.Store(n, i)
+
+    // Fire the connect event
+    i.Connect(inst)
 }
 
 // SendToChannels uses the channels on an event definition to send
@@ -134,7 +175,6 @@ func (s *Server) Connect(client *Client) {
     go client.Conn.Writer(client, s)
 
     s.GM.FireEvent(NewDirectEvent("connected", client, client.Id))
-    s.GM.Log.Debugf("%s client connected", client.Id)
 }
 
 // Disconnect removes a client from the server
@@ -143,12 +183,10 @@ func (s *Server) Disconnect(client *Client) {
     close(client.Send)
 
     s.GM.FireEvent(NewDirectEvent("disconnected", client, client.Id))
-    s.GM.Log.Debug("Client disconnected")
 }
 
 // Broadcast sends a message to all connected clients
 func (s *Server) Broadcast(e Event) {
-    s.GM.Log.Debug("Broadcasting event...")
     s.Clients.Range(func(k, v interface{}) bool {
         client := v.(*Client)
         client.Send <- e
@@ -201,7 +239,6 @@ writerloop:
 
 // Listen starts the server loop
 func (s *Server) Listen() {
-    s.GM.Log.Debug("Starting server listen")
 servloop:
     for {
         select {
