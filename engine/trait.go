@@ -8,8 +8,8 @@ type (
 		Client *Client
 	}
 
-	// InstanceInterface defines the expectations of an instance
-	InstanceInterface interface {
+	// TraitInterface defines the expectations of an instance
+	TraitInterface interface {
 		// Register is responsible for setting up an instance before
 		// its connected
 		Register(*Instance)

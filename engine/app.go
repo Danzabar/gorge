@@ -84,8 +84,8 @@ func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
 	GM.Server.Register <- c
 }
 
-// BindInstance binds a registered instance to a client
-func (GM *GameManager) BindInstance(n string, c *Client) {
+// BindTrait binds a registered instance to a client
+func (GM *GameManager) BindTrait(n string, c *Client) {
 	// Does the given instance exist?
 	i, ok := GM.Instances.Load(n)
 
@@ -96,10 +96,10 @@ func (GM *GameManager) BindInstance(n string, c *Client) {
 
 	// Create a new instance
 	inst := NewInstance(GM)
-	in := i.(InstanceInterface)
+	in := i.(TraitInterface)
 
 	// Bind to connection
-	c.BindInstance(n, in, inst)
+	c.BindTrait(n, in, inst)
 }
 
 // RegisterHandler registers a new event handler
@@ -138,7 +138,7 @@ func (GM *GameManager) AddComponents(components map[string]ComponentInterface) {
 
 // RegisterInstance registers a new instance, this just stores a point to it
 // which when connected to a client is copied
-func (GM *GameManager) RegisterInstance(instances map[string]InstanceInterface) {
+func (GM *GameManager) RegisterTrait(instances map[string]TraitInterface) {
 	for key, value := range instances {
 		GM.Log.Debugf("Registering instance %s", key)
 		value.Register(NewInstance(GM))
