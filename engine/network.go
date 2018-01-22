@@ -94,6 +94,24 @@ func (c *Client) RegisterHandler(n string, h EventHandler) {
     c.Subscribers.Store(n, handlers)
 }
 
+// RemoveTrait removes the trait for the clients list of traits
+// and triggers the destroy event method on the trait interface
+func (c *Client) RemoveTrait(n string, inst *Instance) {
+    t, k := c.Traits.Load(n)
+
+    if !k {
+        // TODO: add a log here once clients have access to it
+        fmt.Println("Nothing to destroy")
+        return
+    }
+
+    // other wise we can destroy the trait
+    trait := t.(TraitInterface)
+
+    trait.Destroy(inst)
+    c.Traits.Delete(n)
+}
+
 // BindInstance adds a new instance to the client
 func (c *Client) BindTrait(n string, i TraitInterface, inst *Instance) {
     // We don't really care if the instance already exists
