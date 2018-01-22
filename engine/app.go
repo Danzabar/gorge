@@ -16,6 +16,8 @@ type (
 
 	// Gamemanager handles components and subscriptions
 	GameManager struct {
+		Config      *ConfigManager
+		Settings    *GorgeSettings
 		Components  *sync.Map
 		Instances   *sync.Map
 		Subscribers *sync.Map
@@ -44,7 +46,9 @@ func NewGame(dbDriver, dbCreds string) *GameManager {
 		DB:          db,
 	}
 
+	GM.Config = NewConfig(GM)
 	GM.Server = NewServer(GM)
+
 	return GM
 }
 
@@ -60,9 +64,15 @@ func NewLog() *logrus.Logger {
 // Run for now isn't much, but it will be incharge of
 // initialising components and running the game engine
 func (GM *GameManager) Run() {
+	// Load Standard Configuration
+	GM.Config.LoadStandard()
+
 	// Run Migrations
 	GM.Migrate()
 	GM.RegisterComponents()
+
+	// Load custom configuration
+	GM.Config.Load()
 
 	// Run Components
 	defer GM.RunComponents()
