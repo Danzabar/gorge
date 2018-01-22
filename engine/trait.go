@@ -4,7 +4,7 @@ type (
 	// Instance is a helper struct that contains all the relevent
 	// information an instance might need
 	Instance struct {
-		*Component
+		Component
 		Client *Client
 	}
 

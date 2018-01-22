@@ -55,6 +55,15 @@ func (c *Component) DB() *gorm.DB {
 	return c.GM.DB
 }
 
+// GetClient finds a client by its identifier
+func (c *Component) GetClient(n string) (*Client, error) {
+	return c.GM.Server.Find(n)
+}
+
+func (c *Component) BindTrait(n string, cl *Client) {
+	c.GM.BindTrait(n, cl)
+}
+
 // Migrate registers a migration entity
 func (c *Component) Migrate(i interface{}) {
 	c.GM.AddMigration(i)
