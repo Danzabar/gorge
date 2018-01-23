@@ -67,12 +67,12 @@ func (GM *GameManager) Run() {
 	// Load Standard Configuration
 	GM.Config.LoadStandard()
 
-	// Run Migrations
-	GM.Migrate()
-	GM.RegisterComponents()
-
 	// Load custom configuration
 	GM.Config.Load()
+
+	// Run Migrations
+	GM.Migrate()
+	defer GM.RegisterComponents()
 
 	// Run Components
 	defer GM.RunComponents()

@@ -87,7 +87,6 @@ func (c *ConfigManager) LoadStandard() {
 
 func (c *ConfigManager) Load() {
     for _, v := range c.targets {
-        c.gm.Log.Debug(v)
         // is it a file or directory?
         fi, err := os.Stat(v)
 
@@ -104,7 +103,7 @@ func (c *ConfigManager) Load() {
         }
 
         // Otherwise we need to traverse a directory
-        go c.traverseDir(v)
+        c.traverseDir(v)
     }
 }
 
@@ -126,7 +125,7 @@ func (c *ConfigManager) ConvertYaml(n string, i interface{}) error {
 func (c *ConfigManager) Fetch(n string) {
     var con Config
 
-    c.gm.Log.Debugf("Loading configuration file: %s", n)
+    c.gm.Log.Infof("Loading configuration file: %s", n)
 
     data, err := ioutil.ReadFile(n)
 
@@ -140,8 +139,6 @@ func (c *ConfigManager) Fetch(n string) {
 
     con = Config{Raw: data, Name: name}
     c.config.Store(con.Name, con)
-
-    c.gm.Log.Debug(con.Name)
 }
 
 func (c *ConfigManager) traverseDir(n string) {
