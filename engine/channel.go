@@ -57,6 +57,10 @@ type (
     ServerChannel struct {
         Channel
     }
+
+    DirectChannel struct {
+        Channel
+    }
 )
 
 func (ch *Channel) SetGM(GM *GameManager) {
@@ -85,6 +89,36 @@ func (ch *Channel) Send(e Event, d EventDefinition) {
         return
     }
 
+    cl, ok := ch.Clients.Load(e.ClientId)
+
+    if !ok {
+        ch.GM.Log.Errorf("Unable to find client from given id: %s", e.ClientId)
+        return
+    }
+
+    client := cl.(*Client)
+    client.Send <- e
+}
+
+// Close - On the base channel object, this isn't really needed
+func (ch *Channel) Close() {}
+
+// Connect adds a new client to the list
+func (ch *Channel) Connect(c *Client) {
+    ch.Clients.Store(c.Id, c)
+}
+
+// Discconect removes the client
+func (ch *Channel) Disconnect(c *Client) {
+    ch.Clients.Delete(c.Id)
+}
+
+func (ch *DirectChannel) Send(e Event, d EventDefinition) {
+    if e.ClientId == "" {
+        ch.GM.Log.Errorf("Direct event sent with no client id: %+v", e)
+        return
+    }
+
     client, err := ch.GM.Server.Find(e.ClientId)
 
     if err != nil {
@@ -105,19 +139,6 @@ func (ch *Channel) Send(e Event, d EventDefinition) {
     }
 
     client.Send <- e
-}
-
-// Close - On the base channel object, this isn't really needed
-func (ch *Channel) Close() {}
-
-// Connect adds a new client to the list
-func (ch *Channel) Connect(c *Client) {
-    ch.Clients.Store(c.Id, c)
-}
-
-// Discconect removes the client
-func (ch *Channel) Disconnect(c *Client) {
-    ch.Clients.Delete(c.Id)
 }
 
 // Send method for the internal channel

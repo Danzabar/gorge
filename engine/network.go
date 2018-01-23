@@ -60,7 +60,7 @@ func NewServer(GM *GameManager) *Server {
     // Add the default channels
     serv.NewChannels(map[string]ChannelInterface{
         INTERNAL_CHAN: &InternalChannel{},
-        DIRECT_CHAN:   &Channel{},
+        DIRECT_CHAN:   &DirectChannel{},
         SERVER_CHAN:   &ServerChannel{},
     })
 
