@@ -101,7 +101,6 @@ func (c *Client) RemoveTrait(n string, inst *Instance) {
 
     if !k {
         // TODO: add a log here once clients have access to it
-        fmt.Println("Nothing to destroy")
         return
     }
 

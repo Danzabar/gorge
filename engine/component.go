@@ -55,6 +55,12 @@ func (c *Component) DB() *gorm.DB {
 	return c.GM.DB
 }
 
+// GetConfigAs deserializes the raw output of a config into
+// the given interface
+func (c *Component) GetConfigAs(n string, i interface{}) error {
+	return c.GM.Config.ConvertYaml(n, i)
+}
+
 // GetClient finds a client by its identifier
 func (c *Component) GetClient(n string) (*Client, error) {
 	return c.GM.Server.Find(n)
