@@ -124,6 +124,21 @@ func (c *Client) BindTrait(n string, i TraitInterface, inst *Instance) {
     i.Connect(inst)
 }
 
+// Forward allows a channel to forward an event even if the event
+// was never meant for the given channel
+func (s *Server) Forward(n string, e Event, d EventDefinition) {
+    // Does the channel exist?
+    ch, err := s.FindChannel(n)
+
+    if err != nil {
+        s.GM.Log.Errorf("attempt to forward an event to a channel that doesn't exist: %s", n)
+        return
+    }
+
+    // if so, forward the event
+    ch.Send(e, d)
+}
+
 // SendToChannels uses the channels on an event definition to send
 // the events to right clients
 func (s *Server) SendToChannels(e Event, d EventDefinition) {
