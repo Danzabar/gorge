@@ -39,16 +39,21 @@ type (
     // GorgeSettings are used to control engine behaivour
     // and may be used to incorperate other tools in the future
     GorgeSettings struct {
-        Game   GorgeSettingsDetail `yaml:"game"`
-        Config []string            `yaml:"config"`
-    }
-
-    // GorgeSettingsDetail defines the main game details
-    // these are more for display, unless you build logic around
-    // them
-    GorgeSettingsDetail struct {
-        Name    string `yaml:"name"`
-        Version string `yaml:"version"`
+        // Game settings are used more for display
+        Game struct {
+            Name    string `yaml:"name"`
+            Version string `yaml:"version"`
+        } `yaml:"game"`
+        // Database settings are used to connect to the db
+        Database struct {
+            Mongo struct {
+                Host     string `yaml:"host"`
+                Database string `yaml:"database"`
+            } `yaml:"mongo"`
+        } `yaml:"database"`
+        // Config entries are scanned and config files are loaded
+        // from them
+        Config []string `yaml:"config"`
     }
 )
 
@@ -57,6 +62,18 @@ func NewConfig(GM *GameManager) *ConfigManager {
         gm:     GM,
         config: new(sync.Map),
     }
+}
+
+func WriteConfig(i interface{}, d string) error {
+    // Convert to yaml
+    ym, err := yaml.Marshal(i)
+
+    if err != nil {
+        return err
+    }
+
+    // Write to file
+    return ioutil.WriteFile(d, ym, 0755)
 }
 
 func (c *ConfigManager) AddTarget(n ...string) {
