@@ -6,6 +6,14 @@ import (
     "github.com/teris-io/shortid"
 )
 
+const (
+    // Constant value for an internal origin
+    ORIG_INTERNAL = "internal"
+
+    // Constant value for an inbound origin
+    ORIG_CLIENT = "client"
+)
+
 type (
     // Event contains a platform event details
     Event struct {
@@ -13,6 +21,7 @@ type (
         Name       string          `json:"name"`
         Data       interface{}     `json:"data"`
         Broadcast  bool            `json:"broadcast"`
+        Origin     string          `json:"origin"`
         Definition EventDefinition `json:"definition"`
         ClientId   string          `json:"clientId"`
         CreatedAt  time.Time       `json:"createdAt"`
@@ -38,6 +47,7 @@ func NewEvent(n string, d interface{}) Event {
         Name:      n,
         Data:      d,
         Broadcast: false,
+        Origin:    ORIG_INTERNAL,
         CreatedAt: time.Now(),
     }
 }

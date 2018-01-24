@@ -244,6 +244,8 @@ readloop:
 
         // Set the info we already know about the event
         e.ClientId = c.Id
+        // We also know this was of the inbound origin
+        e.Origin = ORIG_CLIENT
 
         // Finally fire the event
         s.GM.FireEvent(e)
