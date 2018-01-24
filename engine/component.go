@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 )
 
@@ -50,11 +49,6 @@ func (c *Component) Log() *logrus.Logger {
 	return c.GM.Log
 }
 
-// DB fetches the database instance from the application
-func (c *Component) DB() *gorm.DB {
-	return c.GM.DB
-}
-
 // GetConfigAs deserializes the raw output of a config into
 // the given interface
 func (c *Component) GetConfigAs(n string, i interface{}) error {
@@ -68,11 +62,6 @@ func (c *Component) GetClient(n string) (*Client, error) {
 
 func (c *Component) BindTrait(n string, cl *Client) {
 	c.GM.BindTrait(n, cl)
-}
-
-// Migrate registers a migration entity
-func (c *Component) Migrate(i interface{}) {
-	c.GM.AddMigration(i)
 }
 
 // Event is an easier to use proxy method to register an event

@@ -5,10 +5,6 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,18 +20,12 @@ type (
 		Events      *sync.Map
 		Server      *Server
 		Log         *logrus.Logger
-		DB          *gorm.DB
 		Migrations  []interface{}
 	}
 )
 
 // NewGame creates a new instance of the game manager
-func NewGame(dbDriver, dbCreds string) *GameManager {
-	db, err := gorm.Open(dbDriver, dbCreds)
-
-	if err != nil {
-		panic(err)
-	}
+func NewGame() *GameManager {
 
 	GM := &GameManager{
 		Components:  new(sync.Map),
@@ -43,7 +33,6 @@ func NewGame(dbDriver, dbCreds string) *GameManager {
 		Subscribers: new(sync.Map),
 		Events:      new(sync.Map),
 		Log:         NewLog(),
-		DB:          db,
 	}
 
 	GM.Config = NewConfig(GM)
@@ -70,8 +59,6 @@ func (GM *GameManager) Run() {
 	// Load custom configuration
 	GM.Config.Load()
 
-	// Run Migrations
-	GM.Migrate()
 	defer GM.RegisterComponents()
 
 	// Run Components
@@ -187,14 +174,6 @@ func (GM *GameManager) RunComponents() {
 	})
 
 	GM.Log.Debug("All components have been started...")
-}
-
-// Migrate runs an automigration against the migration list
-func (GM *GameManager) Migrate() {
-	GM.Log.Debugf("Calling migrations...")
-	for _, v := range GM.Migrations {
-		GM.DB.AutoMigrate(v)
-	}
 }
 
 // FireEvent fires the event using the rules registered in the
