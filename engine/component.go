@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2"
 )
 
 type (
@@ -47,6 +48,10 @@ func (c *Component) Setup() {}
 // Log returns the logrus instance from the application
 func (c *Component) Log() *logrus.Logger {
 	return c.GM.Log
+}
+
+func (c *Component) DB() *mgo.Session {
+	return c.GM.DB.Instance()
 }
 
 // GetConfigAs deserializes the raw output of a config into

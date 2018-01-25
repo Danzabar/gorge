@@ -56,3 +56,10 @@ func NewMongo(GM *GameManager) *Mongo {
 
     return mongo
 }
+
+// Instance creates a copy of the session and returns that
+func (m *Mongo) Instance() *mgo.Session {
+    s := m.Session.Copy()
+    s.DB(m.Settings.Database)
+    return s
+}
