@@ -1,2 +1,3 @@
 gorge
 vendor/
+.gorge.yaml
