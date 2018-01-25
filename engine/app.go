@@ -14,6 +14,7 @@ type (
 	GameManager struct {
 		Config      *ConfigManager
 		Settings    *GorgeSettings
+		DB          *Mongo
 		Components  *sync.Map
 		Instances   *sync.Map
 		Subscribers *sync.Map
@@ -59,6 +60,9 @@ func (GM *GameManager) Run() {
 	// Load custom configuration
 	GM.Config.Load()
 
+	// Load Mongo
+	GM.CreateMongo()
+
 	defer GM.RegisterComponents()
 
 	// Run Components
@@ -69,6 +73,11 @@ func (GM *GameManager) Run() {
 	// Start the servers listen routine, so we can connect
 	// to it
 	go GM.Server.Listen()
+}
+
+// CreateMongo attaches a new mongo wrapper to the game manager
+func (GM *GameManager) CreateMongo() {
+	GM.DB = NewMongo(GM)
 }
 
 // Connect adds a new client with the given connection and

@@ -31,7 +31,12 @@ type (
 // without this wrapper, it is there to provide
 // extended functionality to mgo, it does not replace
 // any functionality.
-func NewMongo(GM *GameManager, m MongoSettings) *Mongo {
+func NewMongo(GM *GameManager) *Mongo {
+    // Since we have the GameManager we can
+    // extract the values for mongo from
+    // the global settings
+    m := GM.Settings.Database.Mongo
+
     mongo := &Mongo{GM: GM, Settings: m}
 
     // If autoconnect has been set, create a new session
@@ -46,6 +51,7 @@ func NewMongo(GM *GameManager, m MongoSettings) *Mongo {
         }
 
         mongo.Session = sess
+        GM.Log.Info("Connected to mongo server...")
     }
 
     return mongo
