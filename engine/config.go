@@ -50,6 +50,7 @@ type (
                 Host     string `yaml:"host"`
                 Database string `yaml:"database"`
             } `yaml:"mongo"`
+            AutoSave bool `yaml:"autoSave"`
         } `yaml:"database"`
         // Config entries are scanned and config files are loaded
         // from them
