@@ -14,6 +14,7 @@ type (
 	GameManager struct {
 		Config      *ConfigManager
 		Settings    *GorgeSettings
+		DB          *Mongo
 		Components  *sync.Map
 		Instances   *sync.Map
 		Subscribers *sync.Map
@@ -59,16 +60,24 @@ func (GM *GameManager) Run() {
 	// Load custom configuration
 	GM.Config.Load()
 
+	// Load Mongo
+	GM.CreateMongo()
+
 	defer GM.RegisterComponents()
 
 	// Run Components
 	defer GM.RunComponents()
 
-	GM.Log.Debug("Game has started...")
+	GM.Log.Info("Game has started...")
 
 	// Start the servers listen routine, so we can connect
 	// to it
 	go GM.Server.Listen()
+}
+
+// CreateMongo attaches a new mongo wrapper to the game manager
+func (GM *GameManager) CreateMongo() {
+	GM.DB = NewMongo(GM)
 }
 
 // Connect adds a new client with the given connection and
@@ -124,7 +133,7 @@ func (GM *GameManager) Event(e EventDefinition) {
 // AddComponents adds a map of components to the store
 func (GM *GameManager) AddComponents(components map[string]ComponentInterface) {
 	for key, value := range components {
-		GM.Log.Debugf("Loading component %s", key)
+		GM.Log.Infof("Loading component %s", key)
 		value.SetGM(GM)
 		value.Setup()
 
@@ -133,11 +142,11 @@ func (GM *GameManager) AddComponents(components map[string]ComponentInterface) {
 	}
 }
 
-// RegisterInstance registers a new instance, this just stores a point to it
+// RegisterInstance registers a new trait, this just stores a point to it
 // which when connected to a client is copied
 func (GM *GameManager) RegisterTrait(instances map[string]TraitInterface) {
 	for key, value := range instances {
-		GM.Log.Debugf("Registering instance %s", key)
+		GM.Log.Infof("Registering trait %s", key)
 		value.Register(NewInstance(GM))
 
 		GM.Instances.Store(key, value)
@@ -156,11 +165,11 @@ func (GM *GameManager) RegisterComponents() {
 	GM.Components.Range(func(k, v interface{}) bool {
 		component := v.(ComponentInterface)
 		component.Register()
-		GM.Log.Debugf("Registered component %s", k.(string))
+		GM.Log.Infof("Registered component %s", k.(string))
 		return true
 	})
 
-	GM.Log.Debugf("Finished registering components...")
+	GM.Log.Info("Finished registering components...")
 }
 
 // RunComponents calls the run method on all registered
@@ -169,11 +178,11 @@ func (GM *GameManager) RunComponents() {
 	GM.Components.Range(func(k, v interface{}) bool {
 		component := v.(ComponentInterface)
 		go component.Run()
-		GM.Log.Debugf("Starting component %s", k.(string))
+		GM.Log.Infof("Starting component %s", k.(string))
 		return true
 	})
 
-	GM.Log.Debug("All components have been started...")
+	GM.Log.Info("All components have been started...")
 }
 
 // FireEvent fires the event using the rules registered in the

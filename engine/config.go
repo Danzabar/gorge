@@ -46,11 +46,7 @@ type (
         } `yaml:"game"`
         // Database settings are used to connect to the db
         Database struct {
-            Mongo struct {
-                Host     string `yaml:"host"`
-                Database string `yaml:"database"`
-            } `yaml:"mongo"`
-            AutoSave bool `yaml:"autoSave"`
+            Mongo MongoSettings `yaml:"mongo"`
         } `yaml:"database"`
         // Config entries are scanned and config files are loaded
         // from them
