@@ -142,11 +142,11 @@ func (GM *GameManager) AddComponents(components map[string]ComponentInterface) {
 	}
 }
 
-// RegisterInstance registers a new instance, this just stores a point to it
+// RegisterInstance registers a new trait, this just stores a point to it
 // which when connected to a client is copied
 func (GM *GameManager) RegisterTrait(instances map[string]TraitInterface) {
 	for key, value := range instances {
-		GM.Log.Debugf("Registering instance %s", key)
+		GM.Log.Debugf("Registering trait %s", key)
 		value.Register(NewInstance(GM))
 
 		GM.Instances.Store(key, value)
