@@ -1,9 +1,7 @@
 package engine
 
 import (
-	"errors"
 	"os"
-	"reflect"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -23,8 +21,7 @@ type (
 		Events      *sync.Map
 		Server      *Server
 		Log         *logrus.Logger
-		Migrations  []interface{}
-		Registry    map[string]reflect.Type
+		Registry    *Registry
 	}
 )
 
@@ -37,7 +34,7 @@ func NewGame() *GameManager {
 		Subscribers: new(sync.Map),
 		Events:      new(sync.Map),
 		Log:         NewLog(),
-		Registry:    make(map[string]reflect.Type),
+		Registry:    NewRegistry(),
 	}
 
 	GM.Config = NewConfig(GM)
@@ -100,7 +97,7 @@ func (GM *GameManager) Autoload() {
 	// Load the dynamic traits for the config
 	for _, v := range GM.Settings.Traits {
 		// Check if they are in the registry
-		i, err := GM.GetStruct(v.Name)
+		i, err := GM.Registry.GetStruct(v.Name)
 
 		if err != nil {
 			continue
@@ -174,12 +171,6 @@ func (GM *GameManager) RegisterTrait(instances map[string]TraitInterface) {
 	}
 }
 
-// AddMigration adds an entity to the list of entities
-// that will be migrated when the game runs
-func (GM *GameManager) AddMigration(i interface{}) {
-	GM.Migrations = append(GM.Migrations, i)
-}
-
 // RegisterComponents calls the register method on
 // components in the store
 func (GM *GameManager) RegisterComponents() {
@@ -220,27 +211,4 @@ func (GM *GameManager) FireEvent(e Event) {
 	e.Definition = definition
 
 	go GM.Server.SendToChannels(e, definition)
-}
-
-// RegisterStructs adds the struct to the registry with an identifier
-func (GM *GameManager) RegisterStruct(m map[string]interface{}) {
-	for k, v := range m {
-		GM.Registry[k] = reflect.TypeOf(v)
-	}
-}
-
-// GetStruct fetches and returns a struct from the registry
-// this helps us dynamically load components and traits, so they
-// need to be registered first
-func (GM *GameManager) GetStruct(n string) (interface{}, error) {
-	val, ok := GM.Registry[n]
-
-	if !ok {
-		GM.Log.Errorf("Unable to locate type of %s", n)
-		return nil, errors.New("Unable to locate struct")
-	}
-
-	i := reflect.New(val).Elem().Interface()
-
-	return i, nil
 }
