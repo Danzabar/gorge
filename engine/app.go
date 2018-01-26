@@ -1,7 +1,9 @@
 package engine
 
 import (
+	"errors"
 	"os"
+	"reflect"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -22,6 +24,7 @@ type (
 		Server      *Server
 		Log         *logrus.Logger
 		Migrations  []interface{}
+		Registry    map[string]reflect.Type
 	}
 )
 
@@ -34,6 +37,7 @@ func NewGame() *GameManager {
 		Subscribers: new(sync.Map),
 		Events:      new(sync.Map),
 		Log:         NewLog(),
+		Registry:    make(map[string]reflect.Type),
 	}
 
 	GM.Config = NewConfig(GM)
@@ -57,15 +61,17 @@ func (GM *GameManager) Run() {
 	// Load Standard Configuration
 	GM.Config.LoadStandard()
 
+	// Auto load from config
+	GM.Autoload()
+
 	// Load custom configuration
 	GM.Config.Load()
 
 	// Load Mongo
 	GM.CreateMongo()
 
+	// Set up Components
 	defer GM.RegisterComponents()
-
-	// Run Components
 	defer GM.RunComponents()
 
 	GM.Log.Info("Game has started...")
@@ -88,6 +94,21 @@ func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
 
 	// Register it on the server
 	GM.Server.Register <- c
+}
+
+func (GM *GameManager) Autoload() {
+	// Load the dynamic traits for the config
+	for _, v := range GM.Settings.Traits {
+		// Check if they are in the registry
+		i, err := GM.GetStruct(v.Name)
+
+		if err != nil {
+			continue
+		}
+
+		// If it exists, register it
+		GM.RegisterTrait(map[string]TraitInterface{v.Name: i.(TraitInterface)})
+	}
 }
 
 // BindTrait binds a registered instance to a client
@@ -199,4 +220,27 @@ func (GM *GameManager) FireEvent(e Event) {
 	e.Definition = definition
 
 	go GM.Server.SendToChannels(e, definition)
+}
+
+// RegisterStructs adds the struct to the registry with an identifier
+func (GM *GameManager) RegisterStruct(m map[string]interface{}) {
+	for k, v := range m {
+		GM.Registry[k] = reflect.TypeOf(v)
+	}
+}
+
+// GetStruct fetches and returns a struct from the registry
+// this helps us dynamically load components and traits, so they
+// need to be registered first
+func (GM *GameManager) GetStruct(n string) (interface{}, error) {
+	val, ok := GM.Registry[n]
+
+	if !ok {
+		GM.Log.Errorf("Unable to locate type of %s", n)
+		return nil, errors.New("Unable to locate struct")
+	}
+
+	i := reflect.New(val).Elem().Interface()
+
+	return i, nil
 }

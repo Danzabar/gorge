@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"reflect"
+
 	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2"
 )
@@ -50,8 +52,25 @@ func (c *Component) Log() *logrus.Logger {
 	return c.GM.Log
 }
 
-func (c *Component) DB() *mgo.Session {
-	return c.GM.DB.Instance()
+func (c *Component) DB() *mgo.Database {
+	return c.GM.DB.Instance().DB(c.GM.DB.Settings.Database)
+}
+
+func (c *Component) Save(i interface{}) {
+	var n string
+
+	// Note: this should onlt be performed if we do not
+	// have an entry for this object, at the moment that
+	// configuration doesn't exist, so we will always be
+	// using a collection with the same name as the entity
+	if t := reflect.TypeOf(i); t.Kind() == reflect.Ptr {
+		n = t.Elem().Name()
+	} else {
+		n = t.Name()
+	}
+
+	db := c.DB()
+	db.C(n).Insert(i)
 }
 
 // GetConfigAs deserializes the raw output of a config into
