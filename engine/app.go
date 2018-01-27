@@ -58,11 +58,11 @@ func (GM *GameManager) Run() {
 	// Load Standard Configuration
 	GM.Config.LoadStandard()
 
-	// Auto load from config
-	GM.Autoload()
-
 	// Load custom configuration
 	GM.Config.Load()
+
+	// Auto load from config
+	GM.Autoload()
 
 	// Load Mongo
 	GM.CreateMongo()
