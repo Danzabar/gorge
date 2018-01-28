@@ -21,7 +21,7 @@ type (
 		Events      *sync.Map
 		Server      *Server
 		Log         *logrus.Logger
-		Migrations  []interface{}
+		Registry    *Registry
 	}
 )
 
@@ -34,6 +34,7 @@ func NewGame() *GameManager {
 		Subscribers: new(sync.Map),
 		Events:      new(sync.Map),
 		Log:         NewLog(),
+		Registry:    NewRegistry(),
 	}
 
 	GM.Config = NewConfig(GM)
@@ -60,13 +61,14 @@ func (GM *GameManager) Run() {
 	// Load custom configuration
 	GM.Config.Load()
 
+	// Auto load from config
+	GM.Autoload()
+
 	// Load Mongo
 	GM.CreateMongo()
 
+	// Set up Components
 	defer GM.RegisterComponents()
-
-	// Run Components
-	defer GM.RunComponents()
 
 	GM.Log.Info("Game has started...")
 
@@ -88,6 +90,21 @@ func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
 
 	// Register it on the server
 	GM.Server.Register <- c
+}
+
+func (GM *GameManager) Autoload() {
+	// Load the dynamic traits for the config
+	for _, v := range GM.Settings.Traits {
+		// Check if they are in the registry
+		i, err := GM.Registry.GetStruct(v.Name)
+
+		if err != nil {
+			continue
+		}
+
+		// If it exists, register it
+		GM.RegisterTrait(map[string]TraitInterface{v.Name: i.(TraitInterface)})
+	}
 }
 
 // BindTrait binds a registered instance to a client
@@ -153,12 +170,6 @@ func (GM *GameManager) RegisterTrait(instances map[string]TraitInterface) {
 	}
 }
 
-// AddMigration adds an entity to the list of entities
-// that will be migrated when the game runs
-func (GM *GameManager) AddMigration(i interface{}) {
-	GM.Migrations = append(GM.Migrations, i)
-}
-
 // RegisterComponents calls the register method on
 // components in the store
 func (GM *GameManager) RegisterComponents() {
@@ -170,19 +181,6 @@ func (GM *GameManager) RegisterComponents() {
 	})
 
 	GM.Log.Info("Finished registering components...")
-}
-
-// RunComponents calls the run method on all registered
-// components
-func (GM *GameManager) RunComponents() {
-	GM.Components.Range(func(k, v interface{}) bool {
-		component := v.(ComponentInterface)
-		go component.Run()
-		GM.Log.Infof("Starting component %s", k.(string))
-		return true
-	})
-
-	GM.Log.Info("All components have been started...")
 }
 
 // FireEvent fires the event using the rules registered in the
