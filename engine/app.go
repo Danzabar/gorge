@@ -69,7 +69,6 @@ func (GM *GameManager) Run() {
 
 	// Set up Components
 	defer GM.RegisterComponents()
-	defer GM.RunComponents()
 
 	GM.Log.Info("Game has started...")
 
@@ -182,19 +181,6 @@ func (GM *GameManager) RegisterComponents() {
 	})
 
 	GM.Log.Info("Finished registering components...")
-}
-
-// RunComponents calls the run method on all registered
-// components
-func (GM *GameManager) RunComponents() {
-	GM.Components.Range(func(k, v interface{}) bool {
-		component := v.(ComponentInterface)
-		go component.Run()
-		GM.Log.Infof("Starting component %s", k.(string))
-		return true
-	})
-
-	GM.Log.Info("All components have been started...")
 }
 
 // FireEvent fires the event using the rules registered in the

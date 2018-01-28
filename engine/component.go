@@ -11,17 +11,20 @@ type (
 
 	// Interface for components
 	ComponentInterface interface {
-		// Method to set the reference of the GameManager
 		SetGM(*GameManager)
-		// Method to register events for this component
+		// Method to register events for this component.
+		//
+		// This can be used to register events, perform actions, start
+		// separate processes, the method is only executed once, just
+		// before the server is started.
 		Register()
-		// Method to allow the component to run along side the application
-		// the reason this is separated is to allow for more configuration
-		// checks before running in the future
-		Run()
 		// Setup is the first method called, called when adding a component
 		// it is responsible for setting things up way before the call to start
 		// the game
+		//
+		// Since set up is the first method called, we use this to load
+		// the component pointer, this allows us to use the helper methods
+		// on the component without harming the autoload process.
 		Setup()
 	}
 

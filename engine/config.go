@@ -48,12 +48,6 @@ type (
         Database struct {
             Mongo MongoSettings `yaml:"mongo"`
         } `yaml:"database"`
-        // Components registered here will be automatically
-        // registered on load, they must be in the Registry first
-        // though
-        Components []struct {
-            Name string `yaml:"name"`
-        } `yaml:"components"`
         // Traits property is used to register traits both in the app
         // to bind to clients, but also to register settings for storage
         Traits []struct {
