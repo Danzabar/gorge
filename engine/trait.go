@@ -1,11 +1,32 @@
 package engine
 
+import (
+	"time"
+
+	"gopkg.in/mgo.v2/bson"
+)
+
 type (
 	// Instance is a helper struct that contains all the relevent
 	// information an instance might need
 	Instance struct {
 		Component
 		Client *Client
+	}
+
+	// Trait represents the base contract for a trait
+	// it can be used solely as a trait although it will not
+	// provide any useful functionality.
+	//
+	// The trait struct also provides a useful base for the
+	// mongo integration, if autoSave is enabled traits will
+	// be periodically saved by the server, if autosave is not
+	// enabled, traits can still be saved manually.
+	Trait struct {
+		Id        bson.ObjectId `bson:"_id" json:"-"`
+		ClientId  string        `bson:"clientId" json:"clientId"`
+		CreatedAt time.Time     `bson:"createdAt" json:"createdAt"`
+		UpdatedAt time.Time     `bson:"updatedAt" json:"updatedAt"`
 	}
 
 	// TraitInterface defines the expectations of an instance

@@ -201,7 +201,7 @@ func (s *Server) Find(id string) (*Client, error) {
 func (s *Server) Connect(client *Client) {
     s.Clients.Store(client.Id, client)
 
-    s.GM.Log.Debugf("Connecting new client %s", client.Id)
+    s.GM.Log.Infof("Connecting new client %s", client.Id)
 
     go client.Conn.Reader(client, s)
     go client.Conn.Writer(client, s)
