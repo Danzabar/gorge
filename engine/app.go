@@ -74,7 +74,7 @@ func (GM *GameManager) Run() {
 
 	// Start the servers listen routine, so we can connect
 	// to it
-	go GM.Server.Listen()
+	GM.Server.Listen()
 }
 
 // CreateMongo attaches a new mongo wrapper to the game manager
@@ -93,12 +93,13 @@ func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
 }
 
 func (GM *GameManager) Autoload() {
-	// Load the dynamic traits for the config
+	// Load the dynamic traits for the confi
 	for _, v := range GM.Settings.Traits {
 		// Check if they are in the registry
 		i, err := GM.Registry.GetStruct(v.Name)
 
 		if err != nil {
+			GM.Log.Error(err)
 			continue
 		}
 
