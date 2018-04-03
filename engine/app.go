@@ -74,7 +74,7 @@ func (GM *GameManager) Run() {
 
 	// Start the servers listen routine, so we can connect
 	// to it
-	GM.Server.Listen()
+	go GM.Server.Listen()
 }
 
 // CreateMongo attaches a new mongo wrapper to the game manager
@@ -106,6 +106,12 @@ func (GM *GameManager) Autoload() {
 		// If it exists, register it
 		GM.RegisterTrait(map[string]TraitInterface{v.Name: i.(TraitInterface)})
 	}
+}
+
+// PutTrait binds an existing trait to a client
+func (GM *GameManager) PutTrait(n string, t TraitInterface, c *Client) {
+	inst := NewInstance(GM)
+	c.BindTrait(n, t, inst)
 }
 
 // BindTrait binds a registered instance to a client
@@ -196,6 +202,20 @@ func (GM *GameManager) FireEvent(e Event) {
 
 	definition := def.(EventDefinition)
 	e.Definition = definition
+
+	GM.Log.Debug(definition)
+
+	// Does it have a schema and is it strict schema?
+	if definition.StrictSchema && definition.Schema != "" {
+		GM.Log.Debug("Validating schema..")
+		if ok, err := definition.Validate(e.Data); !ok {
+			// At this point we cannot send to channels
+			GM.Log.Error("Unable to send message as it does not adhere to schema")
+			GM.Log.Error(err)
+			return
+		}
+		GM.Log.Debug("Schema valid")
+	}
 
 	go GM.Server.SendToChannels(e, definition)
 }

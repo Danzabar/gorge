@@ -91,9 +91,13 @@ func (c *Component) BindTrait(n string, cl *Client) {
 	c.GM.BindTrait(n, cl)
 }
 
+func (c *Component) PutTrait(n string, t TraitInterface, cl *Client) {
+	c.GM.PutTrait(n, t, cl)
+}
+
 // Event is an easier to use proxy method to register an event
-func (c *Component) Event(n string, d string, ch []string) {
-	c.GM.Event(EventDefinition{n, d, ch})
+func (c *Component) Event(n string, s string, strict bool, ch []string) {
+	c.GM.Event(EventDefinition{n, s, strict, true, ch})
 }
 
 // Register proxy method to register a new event handler
@@ -104,6 +108,11 @@ func (c *Component) Handler(n string, h EventHandler) {
 // FireEvent is a proxy method for the managers Fire event
 func (c *Component) Fire(n string, d interface{}) {
 	c.GM.FireEvent(NewEvent(n, d))
+}
+
+// FireTo is a proxy method to fire a new direct event
+func (c *Component) FireTo(n string, cl string, d interface{}) {
+	c.GM.FireEvent(NewDirectEvent(n, d, cl))
 }
 
 // Channel creates a new channel on the server
