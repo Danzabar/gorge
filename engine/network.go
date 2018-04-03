@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type (
@@ -12,6 +13,7 @@ type (
 	// Client represents a connected client/user
 	Client struct {
 		Id          string              `json:"id"`
+		MId         bson.ObjectId       `bson:"_id" json:"-"`
 		Conn        ConnectionInterface `json:"-"`
 		Send        chan Event          `json:"-"`
 		Traits      *sync.Map           `json:"-"`
