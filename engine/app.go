@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2"
 )
 
 type (
@@ -16,12 +17,10 @@ type (
 		Settings    *GorgeSettings
 		DB          *Mongo
 		Components  *sync.Map
-		Instances   *sync.Map
 		Subscribers *sync.Map
 		Events      *sync.Map
 		Server      *Server
 		Log         *logrus.Logger
-		Registry    *Registry
 	}
 )
 
@@ -30,11 +29,9 @@ func NewGame() *GameManager {
 
 	GM := &GameManager{
 		Components:  new(sync.Map),
-		Instances:   new(sync.Map),
 		Subscribers: new(sync.Map),
 		Events:      new(sync.Map),
 		Log:         NewLog(),
-		Registry:    NewRegistry(),
 	}
 
 	GM.Config = NewConfig(GM)
@@ -61,16 +58,15 @@ func (GM *GameManager) Run() {
 	// Load custom configuration
 	GM.Config.Load()
 
-	// Auto load from config
-	GM.Autoload()
-
 	// Load Mongo
 	GM.CreateMongo()
 
-	// Set up Components
-	defer GM.RegisterComponents()
+	defer func() {
+		// Set up Components
+		GM.RegisterComponents()
 
-	GM.Log.Info("Game has started...")
+		GM.Log.Info("Game has started...")
+	}()
 
 	// Start the servers listen routine, so we can connect
 	// to it
@@ -92,20 +88,8 @@ func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
 	GM.Server.Register <- c
 }
 
-func (GM *GameManager) Autoload() {
-	// Load the dynamic traits for the confi
-	for _, v := range GM.Settings.Traits {
-		// Check if they are in the registry
-		i, err := GM.Registry.GetStruct(v.Name)
-
-		if err != nil {
-			GM.Log.Error(err)
-			continue
-		}
-
-		// If it exists, register it
-		GM.RegisterTrait(map[string]TraitInterface{v.Name: i.(TraitInterface)})
-	}
+func (GM *GameManager) DBInstance() *mgo.Database {
+	return GM.DB.Instance().DB(GM.DB.Settings.Database)
 }
 
 // PutTrait binds an existing trait to a client
@@ -114,22 +98,10 @@ func (GM *GameManager) PutTrait(n string, t TraitInterface, c *Client) {
 	c.BindTrait(n, t, inst)
 }
 
-// BindTrait binds a registered instance to a client
-func (GM *GameManager) BindTrait(n string, c *Client) {
-	// Does the given instance exist?
-	i, ok := GM.Instances.Load(n)
-
-	if !ok {
-		GM.Log.Errorf("Unable to load instance with given name %s", n)
-		return
-	}
-
-	// Create a new instance
+// RemoveTrait removes the trait instance from the client
+func (GM *GameManager) RemoveTrait(n string, c *Client) {
 	inst := NewInstance(GM)
-	in := i.(TraitInterface)
-
-	// Bind to connection
-	c.BindTrait(n, in, inst)
+	c.RemoveTrait(n, inst)
 }
 
 // RegisterHandler registers a new event handler
@@ -172,8 +144,6 @@ func (GM *GameManager) RegisterTrait(instances map[string]TraitInterface) {
 	for key, value := range instances {
 		GM.Log.Infof("Registering trait %s", key)
 		value.Register(NewInstance(GM))
-
-		GM.Instances.Store(key, value)
 	}
 }
 

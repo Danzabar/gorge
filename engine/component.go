@@ -44,9 +44,6 @@ func (c *Component) SetGM(GM *GameManager) {
 // Register default register method for components that do not require it
 func (c *Component) Register() {}
 
-// Run default run method for components that do not require it
-func (c *Component) Run() {}
-
 // Setup default setup method for components that do not require it
 func (c *Component) Setup() {}
 
@@ -87,10 +84,12 @@ func (c *Component) GetClient(n string) (*Client, error) {
 	return c.GM.Server.Find(n)
 }
 
-func (c *Component) BindTrait(n string, cl *Client) {
-	c.GM.BindTrait(n, cl)
+// RemoveTrait proxy method
+func (c *Component) RemoveTrait(n string, cl *Client) {
+	c.GM.RemoveTrait(n, cl)
 }
 
+// PutTrait proxy method
 func (c *Component) PutTrait(n string, t TraitInterface, cl *Client) {
 	c.GM.PutTrait(n, t, cl)
 }

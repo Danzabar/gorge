@@ -48,6 +48,15 @@ func NewInstance(GM *GameManager) *Instance {
 	return i
 }
 
+// Register default
+func (t *Trait) Register(i *Instance) {}
+
+// Connect default
+func (t *Trait) Connect(i *Instance) {}
+
+// Destroy default
+func (t *Trait) Destroy(i *Instance) {}
+
 // SetClient sets the connected client
 func (i *Instance) SetClient(c *Client) {
 	i.Client = c
