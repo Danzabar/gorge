@@ -6,7 +6,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/mgo.v2"
 )
 
 type (
@@ -86,10 +85,6 @@ func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
 
 	// Register it on the server
 	GM.Server.Register <- c
-}
-
-func (GM *GameManager) DBInstance() *mgo.Database {
-	return GM.DB.Instance().DB(GM.DB.Settings.Database)
 }
 
 // PutTrait binds an existing trait to a client
