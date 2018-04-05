@@ -98,7 +98,7 @@ func (c *Client) RegisterHandler(n string, h EventHandler) {
 
 // RemoveTrait removes the trait for the clients list of traits
 // and triggers the destroy event method on the trait interface
-func (c *Client) RemoveTrait(n string, inst *Instance) {
+func (c *Client) RemoveTrait(n string) {
 	t, k := c.Traits.Load(n)
 
 	if !k {
@@ -109,21 +109,21 @@ func (c *Client) RemoveTrait(n string, inst *Instance) {
 	// other wise we can destroy the trait
 	trait := t.(TraitInterface)
 
-	trait.Destroy(inst)
+	trait.Destroy()
 	c.Traits.Delete(n)
 }
 
 // BindInstance adds a new instance to the client
-func (c *Client) BindTrait(n string, i TraitInterface, inst *Instance) {
+func (c *Client) BindTrait(n string, i TraitInterface) {
 	// We don't really care if the instance already exists
 	// we can replace it with the provided instance
-	inst.SetClient(c)
+	i.SetClient(c)
 
 	// Add to store
 	c.Traits.Store(n, i)
 
 	// Fire the connect event
-	i.Connect(inst)
+	i.Connect()
 }
 
 // Forward allows a channel to forward an event even if the event

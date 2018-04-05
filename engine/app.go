@@ -94,14 +94,12 @@ func (GM *GameManager) DBInstance() *mgo.Database {
 
 // PutTrait binds an existing trait to a client
 func (GM *GameManager) PutTrait(n string, t TraitInterface, c *Client) {
-	inst := NewInstance(GM)
-	c.BindTrait(n, t, inst)
+	c.BindTrait(n, t)
 }
 
 // RemoveTrait removes the trait instance from the client
 func (GM *GameManager) RemoveTrait(n string, c *Client) {
-	inst := NewInstance(GM)
-	c.RemoveTrait(n, inst)
+	c.RemoveTrait(n)
 }
 
 // RegisterHandler registers a new event handler
@@ -143,7 +141,8 @@ func (GM *GameManager) AddComponents(components map[string]ComponentInterface) {
 func (GM *GameManager) RegisterTrait(instances map[string]TraitInterface) {
 	for key, value := range instances {
 		GM.Log.Infof("Registering trait %s", key)
-		value.Register(NewInstance(GM))
+		value.SetGM(GM)
+		value.Register()
 	}
 }
 
