@@ -97,6 +97,19 @@ func SendToClients(GM *GameManager, clients *sync.Map, e Event) {
 	client.Send <- e
 }
 
+// SendToTraits sends messages to traits
+func SendToTraits(client *Client, e Event) {
+	subs, ok := client.Subscribers.Load(e.Name)
+
+	if ok {
+		subscribers := subs.([]EventHandler)
+
+		for _, sub := range subscribers {
+			sub(e)
+		}
+	}
+}
+
 func (ch *Channel) SetGM(GM *GameManager) {
 	ch.GM = GM
 }
@@ -125,7 +138,49 @@ func (ch *Channel) Disconnect(c *Client) {
 }
 
 func (ch *StreamChannel) Send(e Event, d EventDefinition) {
+	var schema StreamSchema
+	Decode(e.Data, &schema)
+
+	if schema.Stream == "" {
+		ch.GM.Log.Error("stream event sent with no stream set")
+		return
+	}
+
+	st, err := ch.GM.StreamManager.Find(schema.Stream)
+
+	if err != nil {
+		ch.GM.Log.Error(err)
+		return
+	}
+
+	// If the stream is a broadcasted one, set the event to broadcast
+	if st.Broadcast {
+		e.Broadcast = true
+	}
+
+	// If we have a specific client id, set this on the event
+	if schema.ClientId != "" {
+		client, err := ch.GM.Server.Find(schema.ClientId)
+
+		if err != nil {
+			ch.GM.Log.Error("Invalid client id given: " + schema.ClientId)
+			return
+		}
+
+		e.ClientId = schema.ClientId
+
+		// Send the event to traits as well
+		SendToTraits(client, e)
+	}
+
 	SendToClients(ch.GM, ch.Clients, e)
+
+	// We also need to check if there are any handlers
+	handlers, _ := ch.GM.StreamManager.FindHandlers(st.Name)
+
+	for _, h := range handlers {
+		h(schema.Data, st)
+	}
 }
 
 func (ch *DirectChannel) Send(e Event, d EventDefinition) {
@@ -143,16 +198,7 @@ func (ch *DirectChannel) Send(e Event, d EventDefinition) {
 
 	// Before sending directly to the client we should send this event
 	// to any subscribers the client may have through its instanced components
-	subs, ok := client.Subscribers.Load(e.Name)
-
-	if ok {
-		subscribers := subs.([]EventHandler)
-
-		for _, sub := range subscribers {
-			sub(e)
-		}
-	}
-
+	SendToTraits(client, e)
 	client.Send <- e
 }
 

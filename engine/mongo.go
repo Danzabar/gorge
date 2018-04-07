@@ -26,6 +26,7 @@ type (
 
 	EntityInterface interface {
 		SetID(bson.ObjectId)
+		SetClientId(string)
 	}
 
 	// MongoSettings are used to denote how the mongo
@@ -71,19 +72,20 @@ func (m *Mongo) Connect() {
 }
 
 func (m *Mongo) Save(c string, i interface{}) {
-	var nonEntity bool
 	var bs bson.ObjectId
 
-	id, ok := m.getField("Id", i)
+	entity := true
+
+	id, ok := getField("Id", i)
 
 	if !ok {
 		m.GM.Log.Warning("Couldn't find an id field, record is being inserted with no id.")
-		nonEntity = true
+		entity = false
 	} else {
 		bs = id.(bson.ObjectId)
 	}
 
-	if !nonEntity && bs.Valid() {
+	if entity && bs.Valid() {
 
 		// Update the record based on its id
 		if err := m.Instance().C(c).UpdateId(bs, i); err != nil {
@@ -93,7 +95,7 @@ func (m *Mongo) Save(c string, i interface{}) {
 
 	} else {
 
-		if !nonEntity {
+		if entity {
 			// Update the entity fields
 			ent := i.(EntityInterface)
 			ent.SetID(bson.NewObjectId())
@@ -105,7 +107,10 @@ func (m *Mongo) Save(c string, i interface{}) {
 		}
 	}
 
-	// TODO inform the stream manager that entity has changed
+	// If this is an entity, we want to send this to the stream manager
+	if entity {
+		m.GM.StreamManager.Updates(i)
+	}
 }
 
 // Instance creates a copy of the session and returns that
@@ -114,7 +119,18 @@ func (m *Mongo) Instance() *mgo.Database {
 	return s.DB(m.Settings.Database)
 }
 
-func (m *Mongo) getField(n string, i interface{}) (interface{}, bool) {
+// SetID is default handler to set the ID of an entity
+func (e *Entity) SetID(in bson.ObjectId) {
+	e.Id = in
+}
+
+// SetClientId is default handler to set client id on an Entity
+func (e *Entity) SetClientId(in string) {
+	e.ClientId = in
+}
+
+// Gets the value of a field if it exists
+func getField(n string, i interface{}) (interface{}, bool) {
 	re := reflect.ValueOf(i).Elem()
 
 	if re.Kind() == reflect.Struct {
@@ -126,8 +142,4 @@ func (m *Mongo) getField(n string, i interface{}) (interface{}, bool) {
 	}
 
 	return nil, false
-}
-
-func (e *Entity) SetID(in bson.ObjectId) {
-	e.Id = in
 }
