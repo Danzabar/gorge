@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"reflect"
 	"time"
 
 	"gopkg.in/mgo.v2"
@@ -24,13 +25,7 @@ type (
 	}
 
 	EntityInterface interface {
-		// Used to control the collection name,
-		GetCollection() string
-
-		// Used to fetch the identifier for this record
-		GetId() bson.ObjectId
-		// Used to set the identifier for this record
-		SetId(bson.ObjectId)
+		SetID(bson.ObjectId)
 	}
 
 	// MongoSettings are used to denote how the mongo
@@ -75,21 +70,36 @@ func (m *Mongo) Connect() {
 	m.GM.Log.Info("Connected to mongo server...")
 }
 
-func (m *Mongo) Save(i EntityInterface) {
-	n := i.GetCollection()
-	id := i.GetId()
+func (m *Mongo) Save(c string, i interface{}) {
+	var nonEntity bool
+	var bs bson.ObjectId
 
-	if id.Valid() {
+	id, ok := m.getField("Id", i)
+
+	if !ok {
+		m.GM.Log.Warning("Couldn't find an id field, record is being inserted with no id.")
+		nonEntity = true
+	} else {
+		bs = id.(bson.ObjectId)
+	}
+
+	if !nonEntity && bs.Valid() {
+
 		// Update the record based on its id
-		if err := m.Instance().C(n).UpdateId(id, i); err != nil {
+		if err := m.Instance().C(c).UpdateId(bs, i); err != nil {
 			m.GM.Log.Error(err)
 			return
 		}
-	} else {
-		// Otherwise we can generate a new id and insert it
-		i.SetId(bson.NewObjectId())
 
-		if err := m.Instance().C(n).Insert(&i); err != nil {
+	} else {
+
+		if !nonEntity {
+			// Update the entity fields
+			ent := i.(EntityInterface)
+			ent.SetID(bson.NewObjectId())
+		}
+
+		if err := m.Instance().C(c).Insert(i); err != nil {
 			m.GM.Log.Error(err)
 			return
 		}
@@ -104,11 +114,20 @@ func (m *Mongo) Instance() *mgo.Database {
 	return s.DB(m.Settings.Database)
 }
 
-// GetId default for mongo entities
-func (e *Entity) GetId() bson.ObjectId {
-	return e.Id
+func (m *Mongo) getField(n string, i interface{}) (interface{}, bool) {
+	re := reflect.ValueOf(i).Elem()
+
+	if re.Kind() == reflect.Struct {
+		f := re.FieldByName(n)
+
+		if f.IsValid() {
+			return f.Interface(), true
+		}
+	}
+
+	return nil, false
 }
 
-func (e *Entity) SetId(b bson.ObjectId) {
-	e.Id = b
+func (e *Entity) SetID(in bson.ObjectId) {
+	e.Id = in
 }

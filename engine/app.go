@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
 
@@ -12,14 +13,15 @@ type (
 
 	// Gamemanager handles components and subscriptions
 	GameManager struct {
-		Config      *ConfigManager
-		Settings    *GorgeSettings
-		DB          *Mongo
-		Components  *sync.Map
-		Subscribers *sync.Map
-		Events      *sync.Map
-		Server      *Server
-		Log         *logrus.Logger
+		Config        *ConfigManager
+		Settings      *GorgeSettings
+		DB            *Mongo
+		Components    *sync.Map
+		Subscribers   *sync.Map
+		Events        *sync.Map
+		Server        *Server
+		StreamManager *StreamManager
+		Log           *logrus.Logger
 	}
 )
 
@@ -35,6 +37,7 @@ func NewGame() *GameManager {
 
 	GM.Config = NewConfig(GM)
 	GM.Server = NewServer(GM)
+	GM.StreamManager = NewStreamManager(GM)
 
 	return GM
 }
@@ -46,6 +49,10 @@ func NewLog() *logrus.Logger {
 	Log.Level = logrus.DebugLevel
 
 	return Log
+}
+
+func Decode(in interface{}, out interface{}) {
+	mapstructure.Decode(in, out)
 }
 
 // Run for now isn't much, but it will be incharge of
@@ -61,6 +68,9 @@ func (GM *GameManager) Run() {
 	GM.CreateMongo()
 
 	defer func() {
+		// Register Stream events
+		GM.StreamManager.Register()
+
 		// Set up Components
 		GM.RegisterComponents()
 
@@ -157,6 +167,14 @@ func (GM *GameManager) RegisterComponents() {
 // FireEvent fires the event using the rules registered in the
 // associative definition
 func (GM *GameManager) FireEvent(e Event) {
+
+	// Panic recovery
+	defer func() {
+		if r := recover(); r != nil {
+			GM.Log.Error(r)
+		}
+	}()
+
 	def, ok := GM.Events.Load(e.Name)
 
 	if !ok {

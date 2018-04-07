@@ -48,6 +48,10 @@ type (
 		Clients *sync.Map
 	}
 
+	StreamChannel struct {
+		Channel
+	}
+
 	// InternalChannel works with component-component events
 	InternalChannel struct {
 		Channel
@@ -63,6 +67,36 @@ type (
 	}
 )
 
+// SendToClients is a method that takes a list of clients to proxy an event to
+func SendToClients(GM *GameManager, clients *sync.Map, e Event) {
+	// If the message is a broadcast send it to everyone
+	if e.Broadcast {
+		clients.Range(func(k, v interface{}) bool {
+			client := v.(*Client)
+
+			client.Send <- e
+			return true
+		})
+
+		return
+	}
+
+	if e.ClientId == "" {
+		GM.Log.Errorf("Direct event sent with no client id: %+v", e)
+		return
+	}
+
+	cl, ok := clients.Load(e.ClientId)
+
+	if !ok {
+		GM.Log.Errorf("Unable to find client from given id: %s", e.ClientId)
+		return
+	}
+
+	client := cl.(*Client)
+	client.Send <- e
+}
+
 func (ch *Channel) SetGM(GM *GameManager) {
 	ch.GM = GM
 }
@@ -74,32 +108,7 @@ func (ch *Channel) Open() {
 
 // Send sends an event to clients on the channel
 func (ch *Channel) Send(e Event, d EventDefinition) {
-	// If the message is a broadcast send it to everyone
-	if e.Broadcast {
-		ch.Clients.Range(func(k, v interface{}) bool {
-			client := v.(*Client)
-
-			client.Send <- e
-			return true
-		})
-
-		return
-	}
-
-	if e.ClientId == "" {
-		ch.GM.Log.Errorf("Direct event sent with no client id: %+v", e)
-		return
-	}
-
-	cl, ok := ch.Clients.Load(e.ClientId)
-
-	if !ok {
-		ch.GM.Log.Errorf("Unable to find client from given id: %s", e.ClientId)
-		return
-	}
-
-	client := cl.(*Client)
-	client.Send <- e
+	SendToClients(ch.GM, ch.Clients, e)
 }
 
 // Close - On the base channel object, this isn't really needed
@@ -113,6 +122,10 @@ func (ch *Channel) Connect(c *Client) {
 // Discconect removes the client
 func (ch *Channel) Disconnect(c *Client) {
 	ch.Clients.Delete(c.Id)
+}
+
+func (ch *StreamChannel) Send(e Event, d EventDefinition) {
+	SendToClients(ch.GM, ch.Clients, e)
 }
 
 func (ch *DirectChannel) Send(e Event, d EventDefinition) {
@@ -145,6 +158,13 @@ func (ch *DirectChannel) Send(e Event, d EventDefinition) {
 
 // Send method for the internal channel
 func (ch *InternalChannel) Send(e Event, d EventDefinition) {
+	// Panic recovery
+	defer func() {
+		if r := recover(); r != nil {
+			ch.GM.Log.Error(r)
+		}
+	}()
+
 	subs, ok := ch.GM.Subscribers.Load(e.Name)
 
 	if !ok {

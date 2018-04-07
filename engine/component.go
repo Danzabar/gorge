@@ -54,8 +54,8 @@ func (c *Component) DB() *mgo.Database {
 	return c.GM.DB.Instance()
 }
 
-func (c *Component) Save(i EntityInterface) {
-	c.GM.DB.Save(i)
+func (c *Component) Save(n string, i interface{}) {
+	c.GM.DB.Save(n, i)
 }
 
 // GetConfigAs deserializes the raw output of a config into
