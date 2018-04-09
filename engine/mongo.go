@@ -2,7 +2,6 @@ package engine
 
 import (
 	"reflect"
-	"time"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -15,18 +14,6 @@ type (
 		GM       *GameManager
 		Settings MongoSettings
 		Session  *mgo.Session
-	}
-
-	Entity struct {
-		Id        string    `bson:"_id,omitempty" json:"id,omitempty"`
-		ClientId  string    `bson:"clientId" json:"clientId"`
-		CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
-		UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
-	}
-
-	EntityInterface interface {
-		SetID(string)
-		SetClientId(string)
 	}
 
 	// MongoSettings are used to denote how the mongo
@@ -88,6 +75,10 @@ func (m *Mongo) Save(c string, i interface{}) {
 	if entity && bs.Valid() {
 		q := bson.M{"entity._id": bs.Hex()}
 
+		// Fire the On Update event
+		ent := i.(EntityInterface)
+		ent.OnUpdate(m.GM)
+
 		// Update the record based on its id
 		if err := m.Instance().C(c).Update(q, i); err != nil {
 			m.GM.Log.Error(err)
@@ -99,7 +90,7 @@ func (m *Mongo) Save(c string, i interface{}) {
 		if entity {
 			// Update the entity fields
 			ent := i.(EntityInterface)
-			ent.SetID(bson.NewObjectId().Hex())
+			ent.OnCreate(bson.NewObjectId().Hex(), m.GM)
 		}
 
 		if err := m.Instance().C(c).Insert(i); err != nil {
@@ -118,16 +109,6 @@ func (m *Mongo) Save(c string, i interface{}) {
 func (m *Mongo) Instance() *mgo.Database {
 	s := m.Session.Copy()
 	return s.DB(m.Settings.Database)
-}
-
-// SetID is default handler to set the ID of an entity
-func (e *Entity) SetID(in string) {
-	e.Id = in
-}
-
-// SetClientId is default handler to set client id on an Entity
-func (e *Entity) SetClientId(in string) {
-	e.ClientId = in
 }
 
 // Gets the value of a field if it exists
