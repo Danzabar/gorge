@@ -148,7 +148,11 @@ func (s *StreamManager) OnSave(e Event) bool {
 	}
 
 	val := reflect.New(st.StructValue).Interface()
-	Decode(schema.Data, val)
+	err = Decode(schema.Data, val)
+
+	if err != nil {
+		s.GM.Log.Error(err)
+	}
 
 	// If this is an entity, we should set the client id
 	entity, ok := val.(EntityInterface)

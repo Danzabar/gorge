@@ -51,8 +51,8 @@ func NewLog() *logrus.Logger {
 	return Log
 }
 
-func Decode(in interface{}, out interface{}) {
-	mapstructure.Decode(in, out)
+func Decode(in interface{}, out interface{}) error {
+	return mapstructure.Decode(in, out)
 }
 
 // Run for now isn't much, but it will be incharge of

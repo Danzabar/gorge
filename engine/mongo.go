@@ -18,14 +18,14 @@ type (
 	}
 
 	Entity struct {
-		Id        bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-		ClientId  string        `bson:"clientId" json:"clientId"`
-		CreatedAt time.Time     `bson:"createdAt" json:"createdAt"`
-		UpdatedAt time.Time     `bson:"updatedAt" json:"updatedAt"`
+		Id        string    `bson:"_id,omitempty" json:"id,omitempty"`
+		ClientId  string    `bson:"clientId" json:"clientId"`
+		CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
+		UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
 	}
 
 	EntityInterface interface {
-		SetID(bson.ObjectId)
+		SetID(string)
 		SetClientId(string)
 	}
 
@@ -73,22 +73,23 @@ func (m *Mongo) Connect() {
 
 func (m *Mongo) Save(c string, i interface{}) {
 	var bs bson.ObjectId
-
 	entity := true
-
 	id, ok := getField("Id", i)
 
 	if !ok {
 		m.GM.Log.Warning("Couldn't find an id field, record is being inserted with no id.")
 		entity = false
-	} else {
-		bs = id.(bson.ObjectId)
+	}
+
+	if ok && bson.IsObjectIdHex(id.(string)) {
+		bs = bson.ObjectIdHex(id.(string))
 	}
 
 	if entity && bs.Valid() {
+		q := bson.M{"entity._id": bs.Hex()}
 
 		// Update the record based on its id
-		if err := m.Instance().C(c).UpdateId(bs, i); err != nil {
+		if err := m.Instance().C(c).Update(q, i); err != nil {
 			m.GM.Log.Error(err)
 			return
 		}
@@ -98,7 +99,7 @@ func (m *Mongo) Save(c string, i interface{}) {
 		if entity {
 			// Update the entity fields
 			ent := i.(EntityInterface)
-			ent.SetID(bson.NewObjectId())
+			ent.SetID(bson.NewObjectId().Hex())
 		}
 
 		if err := m.Instance().C(c).Insert(i); err != nil {
@@ -120,7 +121,7 @@ func (m *Mongo) Instance() *mgo.Database {
 }
 
 // SetID is default handler to set the ID of an entity
-func (e *Entity) SetID(in bson.ObjectId) {
+func (e *Entity) SetID(in string) {
 	e.Id = in
 }
 
