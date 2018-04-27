@@ -69,6 +69,7 @@ func (c *Component) GetClient(n string) (*Client, error) {
 	return c.GM.Server.Find(n)
 }
 
+// ClientValid checks whether a client id is valid
 func (c *Component) ClientValid(n string) bool {
 	if _, err := c.GM.Server.Find(n); err != nil {
 		return false
@@ -77,6 +78,7 @@ func (c *Component) ClientValid(n string) bool {
 	return true
 }
 
+// GetChannel proxy method to fetch a channel from the server
 func (c *Component) GetChannel(n string) (ChannelInterface, error) {
 	return c.GM.Server.FindChannel(n)
 }
@@ -121,6 +123,7 @@ func (c *Component) Channel(n string, ch ChannelInterface) {
 	c.GM.Server.NewChannels(map[string]ChannelInterface{n: ch})
 }
 
+// Channels creates channels using the given map
 func (c *Component) Channels(ch map[string]ChannelInterface) {
 	c.GM.Server.NewChannels(ch)
 }
