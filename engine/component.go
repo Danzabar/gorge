@@ -69,6 +69,18 @@ func (c *Component) GetClient(n string) (*Client, error) {
 	return c.GM.Server.Find(n)
 }
 
+func (c *Component) ClientValid(n string) bool {
+	if _, err := c.GM.Server.Find(n); err != nil {
+		return false
+	}
+
+	return true
+}
+
+func (c *Component) GetChannel(n string) (ChannelInterface, error) {
+	return c.GM.Server.FindChannel(n)
+}
+
 // RemoveTrait proxy method
 func (c *Component) RemoveTrait(n string, cl *Client) {
 	c.GM.RemoveTrait(n, cl)
@@ -97,6 +109,11 @@ func (c *Component) Fire(n string, d interface{}) {
 // FireTo is a proxy method to fire a new direct event
 func (c *Component) FireTo(n string, cl string, d interface{}) {
 	c.GM.FireEvent(NewDirectEvent(n, d, cl))
+}
+
+// ConnectTo is a proxy method for the servers connect to channel method
+func (c *Component) ConnectTo(n string, client *Client) {
+	c.GM.Server.ConnectTo(n, client)
 }
 
 // Channel creates a new channel on the server
