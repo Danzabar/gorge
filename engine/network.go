@@ -269,6 +269,7 @@ writerloop:
 			}
 
 			if err := ws.Conn.WriteJSON(event); err != nil {
+				s.GM.Log.Error(err)
 				s.GM.Log.Errorf("Unable to process event: %+v", event)
 			}
 		}

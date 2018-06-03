@@ -3,6 +3,7 @@ package engine
 import (
 	"os"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/mitchellh/mapstructure"
@@ -52,7 +53,21 @@ func NewLog() *logrus.Logger {
 }
 
 func Decode(in interface{}, out interface{}) error {
-	return mapstructure.Decode(in, out)
+	config := &mapstructure.DecoderConfig{
+		Metadata:         nil,
+		Result:           out,
+		WeaklyTypedInput: false,
+		ErrorUnused:      false,
+		DecodeHook:       mapstructure.StringToTimeHookFunc(time.RFC3339),
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return decoder.Decode(in)
 }
 
 // Run for now isn't much, but it will be incharge of
@@ -99,6 +114,7 @@ func (GM *GameManager) Connect(ws *websocket.Conn, id string) {
 
 // PutTrait binds an existing trait to a client
 func (GM *GameManager) PutTrait(n string, t TraitInterface, c *Client) {
+	t.SetGM(GM)
 	c.BindTrait(n, t)
 }
 

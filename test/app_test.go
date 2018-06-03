@@ -8,8 +8,9 @@ type (
 	// ApplicationTest is a wrapper that connects a client
 	// and the game manager
 	ApplicationTest struct {
-		GM     *engine.GameManager
-		Client *engine.Client
+		GM         *engine.GameManager
+		Client     *engine.Client
+		Connection *TestConnection
 	}
 
 	// TestConnection is used to connect to the server
@@ -17,7 +18,7 @@ type (
 	// and the in slice allows you to see what events have been sent
 	// from server to client
 	TestConnection struct {
-		In  []engine.Event
+		In  chan engine.Event
 		Out chan engine.Event
 	}
 )
@@ -34,7 +35,7 @@ writerloop:
 			}
 
 			// Otherwise direct it straight to the IN channel
-			t.In = append(t.In, event)
+			t.In <- event
 
 			break
 		}
@@ -55,11 +56,21 @@ func (t *TestConnection) Reader(c *engine.Client, s *engine.Server) {
 	}
 }
 
+func NewTestConnection() *TestConnection {
+	return &TestConnection{
+		In:  make(chan engine.Event),
+		Out: make(chan engine.Event),
+	}
+}
+
 // NewApplicationTest creates a new test application
 func NewApplicationTest(c string) *ApplicationTest {
+	conn := NewTestConnection()
+
 	return &ApplicationTest{
-		GM:     engine.NewGame(),
-		Client: engine.NewClient(&TestConnection{}, c),
+		GM:         engine.NewGame(),
+		Client:     engine.NewClient(conn, c),
+		Connection: conn,
 	}
 }
 

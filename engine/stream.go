@@ -148,7 +148,7 @@ func (s *StreamManager) OnSave(e Event) bool {
 	}
 
 	val := reflect.New(st.StructValue).Interface()
-	err = Decode(schema.Data, val)
+	err = Decode(schema.Data, &val)
 
 	if err != nil {
 		s.GM.Log.Error(err)
