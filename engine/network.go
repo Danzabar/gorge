@@ -8,6 +8,14 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+const (
+	// EVENT_CONNECTED constant value for the connected event
+	EVENT_CONNECTED = "connected"
+
+	// EVENT_DISCONNECTED constant value for the disconnected event
+	EVENT_DISCONNECTED = "disconnected"
+)
+
 type (
 
 	// Client represents a connected client/user
@@ -56,8 +64,8 @@ func NewServer(GM *GameManager) *Server {
 	}
 
 	// Register events
-	GM.Event(EventDefinition{"connected", "", false, false, []string{INTERNAL_CHAN, DIRECT_CHAN}})
-	GM.Event(EventDefinition{"disconnected", "", false, false, []string{INTERNAL_CHAN}})
+	GM.Event(EventDefinition{EVENT_CONNECTED, "", false, false, []string{INTERNAL_CHAN, DIRECT_CHAN}})
+	GM.Event(EventDefinition{EVENT_DISCONNECTED, "", false, false, []string{INTERNAL_CHAN}})
 
 	// Add the default channels
 	serv.NewChannels(map[string]ChannelInterface{
@@ -208,7 +216,7 @@ func (s *Server) Connect(client *Client) {
 	go client.Conn.Reader(client, s)
 	go client.Conn.Writer(client, s)
 
-	s.GM.FireEvent(NewDirectEvent("connected", client, client.Id))
+	s.GM.FireEvent(NewDirectEvent(EVENT_CONNECTED, client, client.Id))
 }
 
 // Disconnect removes a client from the server
@@ -216,7 +224,7 @@ func (s *Server) Disconnect(client *Client) {
 	s.Clients.Delete(client.Id)
 	close(client.Send)
 
-	s.GM.FireEvent(NewDirectEvent("disconnected", client, client.Id))
+	s.GM.FireEvent(NewDirectEvent(EVENT_DISCONNECTED, client, client.Id))
 }
 
 // Broadcast sends a message to all connected clients
