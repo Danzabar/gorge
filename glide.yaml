@@ -1,0 +1,18 @@
+package: github.com/Danzabar/gorge
+import:
+- package: github.com/gorilla/websocket
+- package: github.com/mitchellh/go-homedir
+- package: github.com/mitchellh/mapstructure
+- package: github.com/sirupsen/logrus
+- package: github.com/spf13/cobra
+- package: github.com/spf13/viper
+- package: github.com/teris-io/shortid
+- package: github.com/xeipuuv/gojsonschema
+- package: gopkg.in/mgo.v2
+  subpackages:
+  - bson
+- package: gopkg.in/yaml.v2
+testImport:
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
