@@ -3,6 +3,8 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.9
+      - image: circleci/mongo:latest
+
     working_directory: /go/src/github.com/Danzabar/gorge
     steps:
       - checkout
