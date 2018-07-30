@@ -50,7 +50,7 @@ func (c *Component) Log() *logrus.Logger {
 	return c.GM.Log
 }
 
-func (c *Component) DB() *mgo.Database {
+func (c *Component) DB() (*mgo.Database, *mgo.Session) {
 	return c.GM.DB.Instance()
 }
 

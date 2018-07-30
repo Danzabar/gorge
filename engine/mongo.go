@@ -63,6 +63,9 @@ func (m *Mongo) Save(c string, i interface{}) {
 	entity := true
 	id, ok := getField("Id", i)
 
+	db, s := m.Instance()
+	defer s.Close()
+
 	if !ok {
 		m.GM.Log.Warning("Couldn't find an id field, record is being inserted with no id.")
 		entity = false
@@ -80,7 +83,7 @@ func (m *Mongo) Save(c string, i interface{}) {
 		ent.OnUpdate(m.GM)
 
 		// Update the record based on its id
-		if err := m.Instance().C(c).Update(q, i); err != nil {
+		if err := db.C(c).Update(q, i); err != nil {
 			m.GM.Log.Error(err)
 			return
 		}
@@ -93,7 +96,7 @@ func (m *Mongo) Save(c string, i interface{}) {
 			ent.OnCreate(bson.NewObjectId().Hex(), m.GM)
 		}
 
-		if err := m.Instance().C(c).Insert(i); err != nil {
+		if err := db.C(c).Insert(i); err != nil {
 			m.GM.Log.Error(err)
 			return
 		}
@@ -106,9 +109,9 @@ func (m *Mongo) Save(c string, i interface{}) {
 }
 
 // Instance creates a copy of the session and returns that
-func (m *Mongo) Instance() *mgo.Database {
+func (m *Mongo) Instance() (*mgo.Database, *mgo.Session) {
 	s := m.Session.Copy()
-	return s.DB(m.Settings.Database)
+	return s.DB(m.Settings.Database), s
 }
 
 // Gets the value of a field if it exists
