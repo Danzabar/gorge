@@ -12,7 +12,7 @@ import (
 
 type (
 
-	// Gamemanager handles components and subscriptions
+	// GameManager handles components and subscriptions
 	GameManager struct {
 		Config        *ConfigManager
 		Settings      *GorgeSettings

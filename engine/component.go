@@ -7,7 +7,7 @@ import (
 
 type (
 
-	// Interface for components
+	// ComponentInterface for components
 	ComponentInterface interface {
 		SetGM(*GameManager)
 		// Method to register events for this component.
