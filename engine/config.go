@@ -44,10 +44,6 @@ type (
 			Name    string `yaml:"name"`
 			Version string `yaml:"version"`
 		} `yaml:"game"`
-		// Database settings are used to connect to the db
-		Database struct {
-			Mongo MongoSettings `yaml:"mongo"`
-		} `yaml:"database"`
 		// Config entries are scanned and config files are loaded
 		// from them
 		Config []string `yaml:"config"`

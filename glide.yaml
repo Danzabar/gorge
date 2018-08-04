@@ -12,6 +12,10 @@ import:
   subpackages:
   - bson
 - package: gopkg.in/yaml.v2
+- package: github.com/joho/godotenv
+  version: ^1.2.0
+- package: github.com/caarlos0/env
+  version: ^3.3.0
 testImport:
 - package: github.com/stretchr/testify
   subpackages:

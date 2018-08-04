@@ -1,9 +1,3 @@
 game:
   name: "Gorge Test"
-database:
-  mongo:
-    host: ""
-    database: "gorge_test"
-    autoSave: false
-    autoConnect: false
 config: []

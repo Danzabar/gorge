@@ -3,6 +3,7 @@ package engine
 import (
 	"reflect"
 
+	"github.com/caarlos0/env"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -19,10 +20,9 @@ type (
 	// MongoSettings are used to denote how the mongo
 	// wrapper interacts with the engine
 	MongoSettings struct {
-		Host        string `yaml:"host"`
-		Database    string `yaml:"database"`
-		AutoSave    bool   `yaml:"autoSave"`
-		AutoConnect bool   `yaml:"autoConnect"`
+		Host        string `yaml:"host" env:"MONGO_HOST"`
+		Database    string `yaml:"database" env:"MONGO_DATABASE"`
+		AutoConnect bool   `yaml:"autoConnect" env:"MONGO_AUTOCONNECT"`
 	}
 )
 
@@ -30,15 +30,13 @@ type (
 // if set, this will auto connect and fetch an
 // instance of the mgo.Session.
 func NewMongo(GM *GameManager) *Mongo {
-	// Since we have the GameManager we can
-	// extract the values for mongo from
-	// the global settings
-	m := GM.Settings.Database.Mongo
+	settings := MongoSettings{}
+	env.Parse(&settings)
 
-	mongo := &Mongo{GM: GM, Settings: m}
+	mongo := &Mongo{GM: GM, Settings: settings}
 
 	// If autoconnect has been set, create a new session
-	if m.AutoConnect {
+	if settings.AutoConnect {
 		mongo.Connect()
 	}
 
@@ -118,7 +116,6 @@ func (m *Mongo) Instance() (*mgo.Database, *mgo.Session) {
 // Gets the value of a field if it exists
 func getField(n string, i interface{}) (interface{}, bool) {
 	re := reflect.ValueOf(i).Elem()
-
 	if re.Kind() == reflect.Struct {
 		f := re.FieldByName(n)
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sirupsen/logrus"
 )
@@ -64,6 +65,7 @@ func NewGame() *GameManager {
 // this will default to development
 func environment() string {
 	if flag.Lookup("test.v") != nil {
+		godotenv.Load("../.env-test")
 		return TestEnv
 	}
 
