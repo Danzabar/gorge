@@ -6,6 +6,4 @@ database:
     database: "gorge_test"
     autoSave: false
     autoConnect: false
-config: [
-  "./config"
-]
+config: []

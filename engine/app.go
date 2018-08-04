@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"flag"
 	"os"
 	"sync"
 	"time"
@@ -10,10 +11,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	// TestEnv defines when the app is running in test mode
+	TestEnv = "test"
+	// ProdEnv defines when the app is running in production mode
+	ProdEnv = "production"
+	// DevEnv defines when the app is running in development mode
+	DevEnv = "development"
+)
+
 type (
 
 	// GameManager handles components and subscriptions
 	GameManager struct {
+		Environment   string
 		Config        *ConfigManager
 		Settings      *GorgeSettings
 		DB            *Mongo
@@ -28,12 +39,17 @@ type (
 
 // NewGame creates a new instance of the game manager
 func NewGame() *GameManager {
-
 	GM := &GameManager{
 		Components:  new(sync.Map),
 		Subscribers: new(sync.Map),
 		Events:      new(sync.Map),
 		Log:         NewLog(),
+		Environment: environment(),
+	}
+
+	// Should be extracted to a seperate method at some point
+	if GM.Environment == TestEnv {
+		GM.Log.Level = logrus.WarnLevel
 	}
 
 	GM.Config = NewConfig(GM)
@@ -41,6 +57,19 @@ func NewGame() *GameManager {
 	GM.StreamManager = NewStreamManager(GM)
 
 	return GM
+}
+
+// Defines which environment we are in by checking
+// first if we are in test, and secondly for env vars
+// this will default to development
+func environment() string {
+	if flag.Lookup("test.v") != nil {
+		return TestEnv
+	}
+
+	// TODO: Add production env detection
+
+	return DevEnv
 }
 
 // NewLog creates a new logrus logger

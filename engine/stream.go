@@ -164,7 +164,7 @@ func (s *StreamManager) OnSave(e Event) bool {
 	entity, ok := val.(EntityInterface)
 
 	if ok {
-		entity.SetClientId(e.ClientID)
+		entity.SetClientID(e.ClientID)
 	}
 
 	// Save the data

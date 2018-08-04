@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	// Constant value for the location of the standard
+	// StandardConfig - constant value for the location of the standard
 	// configuration yaml
-	STANDARD_CONFIG = "./gorge.yaml"
+	StandardConfig = "./gorge.yaml"
 )
 
 type (
@@ -54,6 +54,7 @@ type (
 	}
 )
 
+// NewConfig creates a new instance of the ConfigManager
 func NewConfig(GM *GameManager) *ConfigManager {
 	return &ConfigManager{
 		gm:     GM,
@@ -61,6 +62,7 @@ func NewConfig(GM *GameManager) *ConfigManager {
 	}
 }
 
+// WriteConfig writes to the given config file
 func WriteConfig(i interface{}, d string) error {
 	// Convert to yaml
 	ym, err := yaml.Marshal(i)
@@ -73,14 +75,16 @@ func WriteConfig(i interface{}, d string) error {
 	return ioutil.WriteFile(d, ym, 0755)
 }
 
+// AddTarget adds a new target for the configmanager to read
 func (c *ConfigManager) AddTarget(n ...string) {
 	for _, v := range n {
 		c.targets = append(c.targets, v)
 	}
 }
 
+// LoadStandard loads the standard gorge.yaml config file
 func (c *ConfigManager) LoadStandard() {
-	c.Fetch(STANDARD_CONFIG)
+	c.Fetch(StandardConfig)
 
 	// Convert it
 	var st GorgeSettings
@@ -99,6 +103,8 @@ func (c *ConfigManager) LoadStandard() {
 	}
 }
 
+// Load traverses through the given directories
+// and scans for config files within there
 func (c *ConfigManager) Load() {
 	for _, v := range c.targets {
 		// is it a file or directory?
@@ -121,6 +127,8 @@ func (c *ConfigManager) Load() {
 	}
 }
 
+// ConvertYaml converts the raw file data from yaml
+// to the given interface{}
 func (c *ConfigManager) ConvertYaml(n string, i interface{}) error {
 	// Fetch config
 	r, k := c.config.Load(n)
@@ -136,6 +144,7 @@ func (c *ConfigManager) ConvertYaml(n string, i interface{}) error {
 	return yaml.Unmarshal(con.Raw, i)
 }
 
+// Fetch grabs the file contents and stores a new config
 func (c *ConfigManager) Fetch(n string) {
 	var con Config
 

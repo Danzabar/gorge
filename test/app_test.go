@@ -2,6 +2,7 @@ package test
 
 import (
 	"github.com/Danzabar/gorge/engine"
+	"testing"
 )
 
 type (
@@ -89,4 +90,23 @@ func (a *ApplicationTest) Start() {
 
 	// Register the client
 	a.GM.Server.Register <- a.Client
+}
+
+func BenchmarkLoadApplication(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		app := NewApplicationTest("tester")
+		app.GM.Run()
+	}
+}
+
+func BenchmarkLoadApplicationWithComponents(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		app := NewApplicationTest("tester")
+		app.GM.AddComponents(map[string]engine.ComponentInterface{
+			"test1": &TestEvents{},
+			"test2": &TestEvents{},
+			"test3": &TestEvents{},
+		})
+		app.GM.Run()
+	}
 }

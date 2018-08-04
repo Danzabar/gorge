@@ -62,7 +62,7 @@ func (m *Mongo) Connect() {
 func (m *Mongo) Save(c string, i interface{}) {
 	var bs bson.ObjectId
 	entity := true
-	id, ok := getField("Id", i)
+	id, ok := getField("ID", i)
 
 	db, s := m.Instance()
 	defer s.Close()

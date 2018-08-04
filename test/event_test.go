@@ -1,7 +1,6 @@
 package test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/Danzabar/gorge/engine"
@@ -37,20 +36,23 @@ func TestEventFiresOnConnection(t *testing.T) {
 
 func TestDirectEvent(t *testing.T) {
 	app := NewApplicationTest("test-123")
+	done := make(chan bool)
+	app.GM.AddComponents(map[string]engine.ComponentInterface{
+		"test": &TestEvents{},
+	})
 
 	go func() {
-		app.GM.FireEvent(engine.NewDirectEvent("test.direct", "test-123", ""))
-	}()
-
-	go func() {
-	eventloop:
 		for {
 			select {
 			case e, _ := <-app.Connection.In:
-				fmt.Println(e)
-				break eventloop
+				if e.Name == "test.direct" {
+					done <- true
+				}
 			}
 		}
-
 	}()
+
+	app.Start()
+	app.GM.FireEvent(engine.NewDirectEvent("test.direct", "", "test-123"))
+	<-done
 }
