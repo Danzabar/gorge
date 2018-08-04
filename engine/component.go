@@ -50,10 +50,12 @@ func (c *Component) Log() *logrus.Logger {
 	return c.GM.Log
 }
 
+// DB returns a database and mongo session
 func (c *Component) DB() (*mgo.Database, *mgo.Session) {
 	return c.GM.DB.Instance()
 }
 
+// Save saves an entity
 func (c *Component) Save(n string, i interface{}) {
 	c.GM.DB.Save(n, i)
 }
@@ -98,12 +100,12 @@ func (c *Component) Event(n string, s string, strict bool, ch []string) {
 	c.GM.Event(EventDefinition{n, s, strict, true, ch})
 }
 
-// Register proxy method to register a new event handler
+// Handler proxy method to register a new event handler
 func (c *Component) Handler(n string, h EventHandler) {
 	c.GM.RegisterHandler(n, h)
 }
 
-// FireEvent is a proxy method for the managers Fire event
+// Fire is a proxy method for the managers Fire event
 func (c *Component) Fire(n string, d interface{}) {
 	c.GM.FireEvent(NewEvent(n, d))
 }

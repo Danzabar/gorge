@@ -1,7 +1,7 @@
 package engine
 
 type (
-	// Instance is a helper struct that contains all the relevent
+	// Trait is a helper struct that contains all the relevent
 	// information an instance might need
 	Trait struct {
 		Component

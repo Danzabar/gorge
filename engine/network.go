@@ -9,18 +9,18 @@ import (
 )
 
 const (
-	// EVENT_CONNECTED constant value for the connected event
-	EVENT_CONNECTED = "connected"
+	// ConnectedEvent constant value for the connected event
+	ConnectedEvent = "connected"
 
-	// EVENT_DISCONNECTED constant value for the disconnected event
-	EVENT_DISCONNECTED = "disconnected"
+	// DisconnectedEvent constant value for the disconnected event
+	DisconnectedEvent = "disconnected"
 )
 
 type (
 
 	// Client represents a connected client/user
 	Client struct {
-		Id          string              `json:"id"`
+		ID          string              `json:"id"`
 		MId         bson.ObjectId       `bson:"_id" json:"-"`
 		Conn        ConnectionInterface `json:"-"`
 		Send        chan Event          `json:"-"`
@@ -64,14 +64,14 @@ func NewServer(GM *GameManager) *Server {
 	}
 
 	// Register events
-	GM.Event(EventDefinition{EVENT_CONNECTED, "", false, false, []string{INTERNAL_CHAN, DIRECT_CHAN}})
-	GM.Event(EventDefinition{EVENT_DISCONNECTED, "", false, false, []string{INTERNAL_CHAN}})
+	GM.Event(EventDefinition{ConnectedEvent, "", false, false, []string{InternalChan, DirectChan}})
+	GM.Event(EventDefinition{DisconnectedEvent, "", false, false, []string{InternalChan}})
 
 	// Add the default channels
 	serv.NewChannels(map[string]ChannelInterface{
-		INTERNAL_CHAN: &InternalChannel{},
-		DIRECT_CHAN:   &DirectChannel{},
-		SERVER_CHAN:   &ServerChannel{},
+		InternalChan: &InternalChannel{},
+		DirectChan:   &DirectChannel{},
+		ServerChan:   &ServerChannel{},
 	})
 
 	return serv
@@ -80,7 +80,7 @@ func NewServer(GM *GameManager) *Server {
 // NewClient creates a new client from the given details
 func NewClient(c ConnectionInterface, id string) *Client {
 	return &Client{
-		Id:          id,
+		ID:          id,
 		Conn:        c,
 		Send:        make(chan Event),
 		Traits:      new(sync.Map),
@@ -121,7 +121,7 @@ func (c *Client) RemoveTrait(n string) {
 	c.Traits.Delete(n)
 }
 
-// BindInstance adds a new instance to the client
+// BindTrait adds a new instance to the client
 func (c *Client) BindTrait(n string, i TraitInterface) {
 	// We don't really care if the instance already exists
 	// we can replace it with the provided instance
@@ -209,22 +209,22 @@ func (s *Server) Find(id string) (*Client, error) {
 
 // Connect adds a new client to the server
 func (s *Server) Connect(client *Client) {
-	s.Clients.Store(client.Id, client)
+	s.Clients.Store(client.ID, client)
 
-	s.GM.Log.Infof("Connecting new client %s", client.Id)
+	s.GM.Log.Infof("Connecting new client %s", client.ID)
 
 	go client.Conn.Reader(client, s)
 	go client.Conn.Writer(client, s)
 
-	s.GM.FireEvent(NewDirectEvent(EVENT_CONNECTED, client, client.Id))
+	s.GM.FireEvent(NewDirectEvent(ConnectedEvent, client, client.ID))
 }
 
 // Disconnect removes a client from the server
 func (s *Server) Disconnect(client *Client) {
-	s.Clients.Delete(client.Id)
+	s.Clients.Delete(client.ID)
 	close(client.Send)
 
-	s.GM.FireEvent(NewDirectEvent(EVENT_DISCONNECTED, client, client.Id))
+	s.GM.FireEvent(NewDirectEvent(DisconnectedEvent, client, client.ID))
 }
 
 // Broadcast sends a message to all connected clients
@@ -255,9 +255,9 @@ readloop:
 		}
 
 		// Set the info we already know about the event
-		e.ClientId = c.Id
+		e.ClientID = c.ID
 		// We also know this was of the inbound origin
-		e.Origin = ORIG_CLIENT
+		e.Origin = ClientOrigin
 
 		// Finally fire the event
 		s.GM.FireEvent(e)

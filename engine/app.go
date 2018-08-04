@@ -52,6 +52,7 @@ func NewLog() *logrus.Logger {
 	return Log
 }
 
+// Decode ensures an event is decoded properly
 func Decode(in interface{}, out interface{}) error {
 	config := &mapstructure.DecoderConfig{
 		Metadata:         nil,
@@ -157,7 +158,7 @@ func (GM *GameManager) AddComponents(components map[string]ComponentInterface) {
 	}
 }
 
-// RegisterInstance registers a new trait, this just stores a point to it
+// RegisterTrait registers a new trait, this just stores a point to it
 // which when connected to a client is copied
 func (GM *GameManager) RegisterTrait(instances map[string]TraitInterface) {
 	for key, value := range instances {

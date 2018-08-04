@@ -7,20 +7,23 @@ import (
 )
 
 const (
-	// Constant for the stream channel name
-	STREAM_CHAN = "stream"
-
-	STREAM_SAVE_EVENT    = "stream.save"
-	STREAM_UPDATED_EVENT = "stream.updated"
+	//StreamChan constant for the stream channel name
+	StreamChan = "stream"
+	// StreamSaveEvent constant for the stream save event name
+	StreamSaveEvent = "stream.save"
+	// StreamUpdatedEvent constant for the stream updated event name
+	StreamUpdatedEvent = "stream.updated"
 )
 
 type (
+	// StreamManager manages all the streams
 	StreamManager struct {
 		GM             *GameManager
 		Streams        *sync.Map
 		StreamHandlers *sync.Map
 	}
 
+	// Stream represents a single stream value
 	Stream struct {
 		Name        string
 		Collection  string
@@ -28,9 +31,10 @@ type (
 		Broadcast   bool
 	}
 
+	// StreamSchema represents the schema of a stream
 	StreamSchema struct {
 		Stream   string      `json:"stream"`
-		ClientId string      `json:"-"`
+		ClientID string      `json:"-"`
 		Data     interface{} `json:"data"`
 	}
 
@@ -39,6 +43,7 @@ type (
 	StreamHandler func(i interface{}, s *Stream)
 )
 
+// NewStreamManager creates a new instance of the stream manager
 func NewStreamManager(GM *GameManager) *StreamManager {
 	return &StreamManager{
 		GM:             GM,
@@ -47,22 +52,23 @@ func NewStreamManager(GM *GameManager) *StreamManager {
 	}
 }
 
+// Register registers the necessary events
 func (s *StreamManager) Register() {
 	// Register the events
 	s.registerEvents()
 
 	// Register channel
-	s.GM.Server.NewChannels(map[string]ChannelInterface{STREAM_CHAN: &StreamChannel{}})
+	s.GM.Server.NewChannels(map[string]ChannelInterface{StreamChan: &StreamChannel{}})
 
 	// Register event handlers
-	s.GM.RegisterHandler(STREAM_SAVE_EVENT, s.OnSave)
+	s.GM.RegisterHandler(StreamSaveEvent, s.OnSave)
 	s.GM.RegisterHandler("connected", s.OnConnect)
 }
 
 // Registers the events used by the stream component
 func (s *StreamManager) registerEvents() {
-	s.GM.Event(EventDefinition{Name: STREAM_SAVE_EVENT, StrictSchema: false, TrustExternal: true, Channels: []string{INTERNAL_CHAN}})
-	s.GM.Event(EventDefinition{Name: STREAM_UPDATED_EVENT, StrictSchema: false, TrustExternal: false, Channels: []string{STREAM_CHAN}})
+	s.GM.Event(EventDefinition{Name: StreamSaveEvent, StrictSchema: false, TrustExternal: true, Channels: []string{InternalChan}})
+	s.GM.Event(EventDefinition{Name: StreamUpdatedEvent, StrictSchema: false, TrustExternal: false, Channels: []string{StreamChan}})
 }
 
 // New creates a new Stream object and adds it to the store
@@ -103,11 +109,11 @@ func (s *StreamManager) Updates(i interface{}) {
 	cl, ok := getField("ClientId", i)
 
 	if ok {
-		schema.ClientId = cl.(string)
+		schema.ClientID = cl.(string)
 	}
 
 	schema.Stream = stream.Name
-	s.GM.FireEvent(NewDirectEvent(STREAM_UPDATED_EVENT, schema, schema.ClientId))
+	s.GM.FireEvent(NewDirectEvent(StreamUpdatedEvent, schema, schema.ClientID))
 }
 
 // FindHandlers finds handlers with the given stream name
@@ -133,7 +139,7 @@ func (s *StreamManager) Handler(n string, h StreamHandler) {
 	s.StreamHandlers.Store(n, st)
 }
 
-// Handler for save events
+// OnSave handler for save events
 func (s *StreamManager) OnSave(e Event) bool {
 	var schema StreamSchema
 
@@ -158,7 +164,7 @@ func (s *StreamManager) OnSave(e Event) bool {
 	entity, ok := val.(EntityInterface)
 
 	if ok {
-		entity.SetClientId(e.ClientId)
+		entity.SetClientId(e.ClientID)
 	}
 
 	// Save the data
@@ -183,13 +189,13 @@ func (s *StreamManager) Find(n string) (*Stream, error) {
 // instance we are connecting them to the streaming
 // channel
 func (s *StreamManager) OnConnect(e Event) bool {
-	cl, err := s.GM.Server.Find(e.ClientId)
+	cl, err := s.GM.Server.Find(e.ClientID)
 
 	if err != nil {
 		s.GM.Log.Error(err)
 		return false
 	}
 
-	s.GM.Server.ConnectTo(STREAM_CHAN, cl)
+	s.GM.Server.ConnectTo(StreamChan, cl)
 	return true
 }

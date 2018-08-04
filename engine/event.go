@@ -9,11 +9,11 @@ import (
 )
 
 const (
-	// Constant value for an internal origin
-	ORIG_INTERNAL = "internal"
+	// InternalOrigin sconstant value for an internal origin
+	InternalOrigin = "internal"
 
-	// Constant value for an inbound origin
-	ORIG_CLIENT = "client"
+	// ClientOrigin constant value for an inbound origin
+	ClientOrigin = "client"
 )
 
 type (
@@ -25,7 +25,7 @@ type (
 		Broadcast  bool            `json:"broadcast"`
 		Origin     string          `json:"origin"`
 		Definition EventDefinition `json:"definition"`
-		ClientId   string          `json:"clientId"`
+		ClientID   string          `json:"clientId"`
 		CreatedAt  time.Time       `json:"createdAt"`
 	}
 
@@ -39,10 +39,11 @@ type (
 		Channels      []string `json:"channels"`
 	}
 
-	// EventHandlers are used to process events
+	// EventHandler is used to process events
 	EventHandler func(e Event) bool
 )
 
+// Validate validates the integrity of a message against a schema
 func (e EventDefinition) Validate(p interface{}) (bool, error) {
 	rs, err := ioutil.ReadFile(e.Schema)
 
@@ -58,6 +59,7 @@ func (e EventDefinition) Validate(p interface{}) (bool, error) {
 	return result.Valid(), err
 }
 
+// NewEvent creates a new event
 func NewEvent(n string, d interface{}) Event {
 	id, _ := shortid.Generate()
 
@@ -66,13 +68,14 @@ func NewEvent(n string, d interface{}) Event {
 		Name:      n,
 		Data:      d,
 		Broadcast: false,
-		Origin:    ORIG_INTERNAL,
+		Origin:    InternalOrigin,
 		CreatedAt: time.Now(),
 	}
 }
 
+// NewDirectEvent creates a new direct event
 func NewDirectEvent(n string, d interface{}, c string) Event {
 	ev := NewEvent(n, d)
-	ev.ClientId = c
+	ev.ClientID = c
 	return ev
 }

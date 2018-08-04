@@ -48,8 +48,8 @@ func (t *TestConnection) Reader(c *engine.Client, s *engine.Server) {
 	for {
 		select {
 		case e := <-t.Out:
-			e.ClientId = c.Id
-			e.Origin = engine.ORIG_CLIENT
+			e.ClientID = c.ID
+			e.Origin = engine.ClientOrigin
 			s.GM.FireEvent(e)
 			break
 		}

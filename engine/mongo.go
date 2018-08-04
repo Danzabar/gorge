@@ -58,6 +58,7 @@ func (m *Mongo) Connect() {
 	m.GM.Log.Info("Connected to mongo server...")
 }
 
+// Save saves an entity and streams it back out
 func (m *Mongo) Save(c string, i interface{}) {
 	var bs bson.ObjectId
 	entity := true

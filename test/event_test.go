@@ -15,8 +15,8 @@ type (
 )
 
 func (t *TestEvents) Register() {
-	t.Event("test.direct", "", false, []string{engine.DIRECT_CHAN})
-	t.Event("test.internal", "", false, []string{engine.INTERNAL_CHAN})
+	t.Event("test.direct", "", false, []string{engine.DirectChan})
+	t.Event("test.internal", "", false, []string{engine.InternalChan})
 }
 
 func TestEventFiresOnConnection(t *testing.T) {
@@ -25,7 +25,7 @@ func TestEventFiresOnConnection(t *testing.T) {
 
 	app.GM.RegisterHandler("connected", func(e engine.Event) bool {
 		c := e.Data.(*engine.Client)
-		assert.Equal(t, app.Client.Id, c.Id)
+		assert.Equal(t, app.Client.ID, c.ID)
 
 		done <- true
 		return true

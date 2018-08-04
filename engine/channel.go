@@ -5,15 +5,14 @@ import (
 )
 
 const (
+	// InternalChan const value for the name of the internal channel
+	InternalChan = "internal"
 
-	// Const value for the name of the internal channel
-	INTERNAL_CHAN = "internal"
+	// DirectChan const value for the name of the direct channel
+	DirectChan = "direct"
 
-	// Const value for the name of the direct channel
-	DIRECT_CHAN = "direct"
-
-	// Const value for the name of the server channel
-	SERVER_CHAN = "server"
+	// ServerChan const value for the name of the server channel
+	ServerChan = "server"
 )
 
 type (
@@ -48,6 +47,7 @@ type (
 		Clients *sync.Map
 	}
 
+	// StreamChannel is a channel for streaming data
 	StreamChannel struct {
 		Channel
 	}
@@ -62,6 +62,7 @@ type (
 		Channel
 	}
 
+	// DirectChannel is a channel to send direct messages
 	DirectChannel struct {
 		Channel
 	}
@@ -81,15 +82,15 @@ func SendToClients(GM *GameManager, clients *sync.Map, e Event) {
 		return
 	}
 
-	if e.ClientId == "" {
+	if e.ClientID == "" {
 		GM.Log.Errorf("Direct event sent with no client id: %+v", e)
 		return
 	}
 
-	cl, ok := clients.Load(e.ClientId)
+	cl, ok := clients.Load(e.ClientID)
 
 	if !ok {
-		GM.Log.Errorf("Unable to find client from given id: %s", e.ClientId)
+		GM.Log.Errorf("Unable to find client from given id: %s", e.ClientID)
 		return
 	}
 
@@ -110,6 +111,7 @@ func SendToTraits(client *Client, e Event) {
 	}
 }
 
+// SetGM sets the GameManager instance
 func (ch *Channel) SetGM(GM *GameManager) {
 	ch.GM = GM
 }
@@ -129,14 +131,15 @@ func (ch *Channel) Close() {}
 
 // Connect adds a new client to the list
 func (ch *Channel) Connect(c *Client) {
-	ch.Clients.Store(c.Id, c)
+	ch.Clients.Store(c.ID, c)
 }
 
-// Discconect removes the client
+// Disconnect removes the client
 func (ch *Channel) Disconnect(c *Client) {
-	ch.Clients.Delete(c.Id)
+	ch.Clients.Delete(c.ID)
 }
 
+// Send sends a stream message to the correct handlers
 func (ch *StreamChannel) Send(e Event, d EventDefinition) {
 	var schema StreamSchema
 	Decode(e.Data, &schema)
@@ -159,15 +162,15 @@ func (ch *StreamChannel) Send(e Event, d EventDefinition) {
 	}
 
 	// If we have a specific client id, set this on the event
-	if schema.ClientId != "" {
-		client, err := ch.GM.Server.Find(schema.ClientId)
+	if schema.ClientID != "" {
+		client, err := ch.GM.Server.Find(schema.ClientID)
 
 		if err != nil {
-			ch.GM.Log.Error("Invalid client id given: " + schema.ClientId)
+			ch.GM.Log.Error("Invalid client id given: " + schema.ClientID)
 			return
 		}
 
-		e.ClientId = schema.ClientId
+		e.ClientID = schema.ClientID
 
 		// Send the event to traits as well
 		SendToTraits(client, e)
@@ -183,16 +186,17 @@ func (ch *StreamChannel) Send(e Event, d EventDefinition) {
 	}
 }
 
+// Send is the send policy for direct channels
 func (ch *DirectChannel) Send(e Event, d EventDefinition) {
-	if e.ClientId == "" {
+	if e.ClientID == "" {
 		ch.GM.Log.Errorf("Direct event sent with no client id: %+v", e)
 		return
 	}
 
-	client, err := ch.GM.Server.Find(e.ClientId)
+	client, err := ch.GM.Server.Find(e.ClientID)
 
 	if err != nil {
-		ch.GM.Log.Errorf("Direct event sent with unknown client: %s", e.ClientId)
+		ch.GM.Log.Errorf("Direct event sent with unknown client: %s", e.ClientID)
 		return
 	}
 
