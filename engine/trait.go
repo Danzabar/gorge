@@ -1,8 +1,8 @@
 package engine
 
 type (
-	// Trait is a helper struct that contains all the relevent
-	// information an instance might need
+	// Trait is a helper struct that contains information
+	// an instance might need
 	Trait struct {
 		Component
 		Client *Client
@@ -12,7 +12,7 @@ type (
 	TraitInterface interface {
 		// SetGM sets the GameManager instance, allowing extra functionality
 		SetGM(*GameManager)
-		// SetClient sets the relevent client to the trait
+		// SetClient sets the client
 		SetClient(*Client)
 		// Register is responsible for setting up an instance before
 		// its connected

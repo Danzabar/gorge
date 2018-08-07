@@ -1,11 +1,10 @@
 package engine
 
 import (
-	_ "io/ioutil"
+	"io/ioutil"
 	"time"
 
 	"github.com/teris-io/shortid"
-	_ "github.com/xeipuuv/gojsonschema"
 )
 
 const (
@@ -31,46 +30,46 @@ type (
 	// EventDefinition stores the definition of an event
 	// used for documentatio
 	EventDefinition struct {
-		Name        string   `json:"name"`
-		Description string   `json:"description"`
-		Channels    []string `json:"channels"`
+		Name        string
+		Description string
+		Channels    []string
+		Validator   EventValidator
+	}
+
+	// EventValidator allows the attaching of a validator
+	// and a schema to an event definition
+	EventValidator struct {
+		Handler Validation
+		Schema  string
 	}
 
 	// EventHandler is used to process events
 	EventHandler func(e Event) bool
 
-	// EventValidator is the contact for a validator
-	EventValidator interface {
-		// Validate is used to validate the message against
-		// a schema
-		Validate(schema string, subject interface{}) error
-	}
+	// Validation is a contract for a func that can handle
+	// validation rules given a schema and data
+	Validation func(schema string, subject interface{}) error
 )
 
 // Validate validates the integrity of a message against a schema
-/*func (e EventDefinition) Validate(p interface{}) (bool, error) {
-	rs, err := ioutil.ReadFile(e.Schema)
-
-	if err != nil {
-		return false, err
+func (e EventDefinition) Validate(p interface{}) error {
+	if e.Validator.Handler != nil {
+		if err := e.Validator.Handler(e.Validator.Schema, p); err != nil {
+			return err
+		}
 	}
 
-	s := gojsonschema.NewStringLoader(string(rs))
-	d := gojsonschema.NewGoLoader(p)
-
-	result, err := gojsonschema.Validate(s, d)
-
-	return result.Valid(), err
-}*/
+	return nil
+}
 
 // NewEvent creates a new event
-func NewEvent(n string, d interface{}) Event {
+func NewEvent(name string, data interface{}) Event {
 	id, _ := shortid.Generate()
 
 	return Event{
 		ID:        id,
-		Name:      n,
-		Data:      d,
+		Name:      name,
+		Data:      data,
 		Broadcast: false,
 		Origin:    InternalOrigin,
 		CreatedAt: time.Now(),
@@ -82,4 +81,15 @@ func NewDirectEvent(n string, d interface{}, c string) Event {
 	ev := NewEvent(n, d)
 	ev.ClientID = c
 	return ev
+}
+
+// NewEventValidator creates a new event validator given a file name
+func NewEventValidator(file string, h Validation) EventValidator {
+	rs, err := ioutil.ReadFile(file)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return EventValidator{Handler: h, Schema: string(rs)}
 }

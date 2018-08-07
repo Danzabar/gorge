@@ -36,8 +36,7 @@ type (
 		Name string `json:"name"`
 	}
 
-	// GorgeSettings are used to control engine behaivour
-	// and may be used to incorperate other tools in the future
+	// GorgeSettings are used to control engine behaviour
 	GorgeSettings struct {
 		// Game settings are used more for display
 		Game struct {

@@ -25,8 +25,8 @@ type (
 
 	TestEntity struct {
 		engine.Entity
-		Name string `json:"string"`
-		Foo  string `json:"string"`
+		Name string `json:"name"`
+		Foo  string `json:"foo"`
 	}
 )
 
