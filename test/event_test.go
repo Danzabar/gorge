@@ -14,8 +14,8 @@ type (
 )
 
 func (t *TestEvents) Register() {
-	t.Event("test.direct", "", false, []string{engine.DirectChan})
-	t.Event("test.internal", "", false, []string{engine.InternalChan})
+	t.Event("test.direct", []string{engine.DirectChan})
+	t.Event("test.internal", []string{engine.InternalChan})
 }
 
 func TestEventFiresOnConnection(t *testing.T) {
@@ -31,6 +31,20 @@ func TestEventFiresOnConnection(t *testing.T) {
 	})
 
 	app.Start()
+	<-done
+}
+
+func TestEventFiresOnDisconnection(t *testing.T) {
+	app := NewApplicationTest("test-122")
+	done := make(chan bool)
+
+	app.GM.RegisterHandler("disconnected", func(e engine.Event) bool {
+		done <- true
+		return true
+	})
+
+	app.Start()
+	app.Disconnect()
 	<-done
 }
 

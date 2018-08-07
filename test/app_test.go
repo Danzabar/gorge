@@ -22,6 +22,12 @@ type (
 		In  chan engine.Event
 		Out chan engine.Event
 	}
+
+	TestEntity struct {
+		engine.Entity
+		Name string `json:"string"`
+		Foo  string `json:"string"`
+	}
 )
 
 // Writer is required by ConnectionInterface, this stores the messages in
@@ -83,6 +89,11 @@ func StartNewAppTest(c string) *ApplicationTest {
 	return app
 }
 
+// Disconnect fires the disconnect event to the server
+func (a *ApplicationTest) Disconnect() {
+	a.GM.Server.Disconnect(a.Client)
+}
+
 // Start runs the game manager and registers the client
 func (a *ApplicationTest) Start() {
 	// Run the app
@@ -108,5 +119,73 @@ func BenchmarkLoadApplicationWithComponents(b *testing.B) {
 			"test3": &TestEvents{},
 		})
 		app.GM.Run()
+	}
+}
+
+func BenchmarkEventSend(b *testing.B) {
+	app := NewApplicationTest("tester")
+	app.GM.AddComponents(map[string]engine.ComponentInterface{
+		"events": &TestEvents{},
+	})
+
+	app.Start()
+
+	for i := 0; i < b.N; i++ {
+		app.GM.FireEvent(engine.NewDirectEvent("test.direct", "", "tester"))
+	}
+}
+
+func BenchmarkStreamEventOutboundSend(b *testing.B) {
+	app := NewApplicationTest("tester")
+	app.GM.StreamManager.New("test", "test", &TestEntity{}, false)
+
+	app.Start()
+	app.GM.DB.Settings = engine.MongoSettings{Host: "localhost", Database: "test", AutoConnect: true}
+	app.GM.DB.Connect()
+
+	for i := 0; i < b.N; i++ {
+		t := &TestEntity{Name: "test", Foo: "bar"}
+		app.GM.DB.Save("test", t)
+	}
+}
+
+func BenchmarkStreamEventFullCycle(b *testing.B) {
+	app := NewApplicationTest("tester")
+	app.GM.StreamManager.New("test", "test", &TestEntity{}, false)
+
+	app.Start()
+	app.GM.DB.Settings = engine.MongoSettings{Host: "localhost", Database: "test", AutoConnect: true}
+	app.GM.DB.Connect()
+
+	for i := 0; i < b.N; i++ {
+		done := make(chan bool)
+
+		// Server responds with a stream event
+		go func() {
+			for {
+				select {
+				case e, _ := <-app.Connection.In:
+					app.GM.Log.Error(e.Name)
+					if e.Name == "stream.updated" {
+						done <- true
+					}
+				}
+			}
+		}()
+
+		// User sends in stream event
+		e := engine.Event{
+			Name: "stream.save",
+			Data: engine.StreamSchema{
+				Stream:   "test",
+				Data:     &TestEntity{Name: "Dave"},
+				ClientID: "tester"},
+			ClientID: "tester",
+		}
+
+		app.Connection.Out <- e
+
+		// The test isn't finished until we get the event
+		<-done
 	}
 }

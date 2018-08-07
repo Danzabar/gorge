@@ -67,8 +67,8 @@ func (s *StreamManager) Register() {
 
 // Registers the events used by the stream component
 func (s *StreamManager) registerEvents() {
-	s.GM.Event(EventDefinition{Name: StreamSaveEvent, StrictSchema: false, TrustExternal: true, Channels: []string{InternalChan}})
-	s.GM.Event(EventDefinition{Name: StreamUpdatedEvent, StrictSchema: false, TrustExternal: false, Channels: []string{StreamChan}})
+	s.GM.Event(EventDefinition{Name: StreamSaveEvent, Channels: []string{InternalChan}})
+	s.GM.Event(EventDefinition{Name: StreamUpdatedEvent, Channels: []string{StreamChan}})
 }
 
 // New creates a new Stream object and adds it to the store

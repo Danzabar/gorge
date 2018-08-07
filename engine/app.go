@@ -231,17 +231,15 @@ func (GM *GameManager) FireEvent(e Event) {
 	}
 
 	definition := def.(EventDefinition)
-	e.Definition = definition
-
 	// Does it have a schema and is it strict schema?
-	if definition.StrictSchema && definition.Schema != "" {
+	/*if definition.StrictSchema && definition.Schema != "" {
 		if ok, err := definition.Validate(e.Data); !ok {
 			// At this point we cannot send to channels
 			GM.Log.Error("Unable to send message as it does not adhere to schema")
 			GM.Log.Error(err)
 			return
 		}
-	}
+	}*/
 
 	go GM.Server.SendToChannels(e, definition)
 }

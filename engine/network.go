@@ -64,8 +64,8 @@ func NewServer(GM *GameManager) *Server {
 	}
 
 	// Register events
-	GM.Event(EventDefinition{ConnectedEvent, "", false, false, []string{InternalChan, DirectChan}})
-	GM.Event(EventDefinition{DisconnectedEvent, "", false, false, []string{InternalChan}})
+	GM.Event(EventDefinition{Name: ConnectedEvent, Channels: []string{InternalChan, DirectChan}})
+	GM.Event(EventDefinition{Name: DisconnectedEvent, Channels: []string{InternalChan}})
 
 	// Add the default channels
 	serv.NewChannels(map[string]ChannelInterface{

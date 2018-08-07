@@ -1,11 +1,11 @@
 package engine
 
 import (
-	"io/ioutil"
+	_ "io/ioutil"
 	"time"
 
 	"github.com/teris-io/shortid"
-	"github.com/xeipuuv/gojsonschema"
+	_ "github.com/xeipuuv/gojsonschema"
 )
 
 const (
@@ -19,32 +19,36 @@ const (
 type (
 	// Event contains a platform event details
 	Event struct {
-		ID         string          `json:"id"`
-		Name       string          `json:"name"`
-		Data       interface{}     `json:"data"`
-		Broadcast  bool            `json:"broadcast"`
-		Origin     string          `json:"origin"`
-		Definition EventDefinition `json:"definition"`
-		ClientID   string          `json:"clientId"`
-		CreatedAt  time.Time       `json:"createdAt"`
+		ID        string      `json:"id"`
+		Name      string      `json:"name"`
+		Data      interface{} `json:"data"`
+		Broadcast bool        `json:"broadcast"`
+		Origin    string      `json:"origin"`
+		ClientID  string      `json:"clientId"`
+		CreatedAt time.Time   `json:"createdAt"`
 	}
 
 	// EventDefinition stores the definition of an event
-	// used for documentation
+	// used for documentatio
 	EventDefinition struct {
-		Name          string   `json:"name"`
-		Schema        string   `json:"schema"`
-		StrictSchema  bool     `json:"strictSchema"`
-		TrustExternal bool     `json:"trustExternal"`
-		Channels      []string `json:"channels"`
+		Name        string   `json:"name"`
+		Description string   `json:"description"`
+		Channels    []string `json:"channels"`
 	}
 
 	// EventHandler is used to process events
 	EventHandler func(e Event) bool
+
+	// EventValidator is the contact for a validator
+	EventValidator interface {
+		// Validate is used to validate the message against
+		// a schema
+		Validate(schema string, subject interface{}) error
+	}
 )
 
 // Validate validates the integrity of a message against a schema
-func (e EventDefinition) Validate(p interface{}) (bool, error) {
+/*func (e EventDefinition) Validate(p interface{}) (bool, error) {
 	rs, err := ioutil.ReadFile(e.Schema)
 
 	if err != nil {
@@ -57,7 +61,7 @@ func (e EventDefinition) Validate(p interface{}) (bool, error) {
 	result, err := gojsonschema.Validate(s, d)
 
 	return result.Valid(), err
-}
+}*/
 
 // NewEvent creates a new event
 func NewEvent(n string, d interface{}) Event {

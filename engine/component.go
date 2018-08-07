@@ -96,8 +96,8 @@ func (c *Component) PutTrait(n string, t TraitInterface, cl *Client) {
 }
 
 // Event is an easier to use proxy method to register an event
-func (c *Component) Event(n string, s string, strict bool, ch []string) {
-	c.GM.Event(EventDefinition{n, s, strict, true, ch})
+func (c *Component) Event(n string, ch []string) {
+	c.GM.Event(EventDefinition{Name: n, Channels: ch})
 }
 
 // Handler proxy method to register a new event handler
