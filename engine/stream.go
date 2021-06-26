@@ -106,7 +106,7 @@ func (s *StreamManager) Updates(i interface{}) {
 		return
 	}
 
-	cl, ok := getField("ClientId", i)
+	cl, ok := getField("ClientID", i)
 
 	if ok {
 		schema.ClientID = cl.(string)

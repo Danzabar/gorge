@@ -3,7 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/Danzabar/gorge/engine"
+	"gorge/engine"
+
 	"github.com/spf13/cobra"
 )
 
