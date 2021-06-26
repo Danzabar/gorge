@@ -9,10 +9,5 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Glide dependencies
-          command: |
-            curl https://glide.sh/get | sh
-            glide update
-      - run:
           name: Go Test
           command: go test -v -cover -race -coverpkg ./... ./... 
