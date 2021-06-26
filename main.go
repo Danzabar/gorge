@@ -1,6 +1,6 @@
 package main
 
-import "gorge/cmd"
+import "github.com/Danzabar/gorge/cmd"
 
 func main() {
 	cmd.Execute()

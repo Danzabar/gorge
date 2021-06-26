@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
-	github.com/Danzabar/gorge v0.0.0-20180807204009-2288963ac065
 	github.com/caarlos0/env v3.3.0+incompatible
 	github.com/gorilla/websocket v1.2.1-0.20180605202552-5ed622c449da
 	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
