@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/caarlos0/env v3.3.0+incompatible
-	github.com/gorilla/websocket v1.2.1-0.20180605202552-5ed622c449da
+	github.com/gorilla/websocket v1.4.1
 	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/joho/godotenv v1.2.0
